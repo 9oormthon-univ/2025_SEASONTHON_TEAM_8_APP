@@ -48,6 +48,27 @@ class AIKeyboardService : InputMethodService() {
     
     companion object {
         private const val TAG = "AIKeyboardService"
+        
+        // ==================== 디자인 상수 ====================
+        // 색상
+        private const val COLOR_PRIMARY = "#2196F3"           // 파란색 (쉬프트키 활성화)
+        private const val COLOR_WHITE = "#FFFFFF"             // 흰색 (일반 키)
+        private const val COLOR_LIGHT_GRAY = "#E0E0E0"        // 연한 회색 (기능 키)
+        private const val COLOR_DARK_GRAY = "#424242"         // 진한 회색 (텍스트)
+        private const val COLOR_BLACK = "#000000"             // 검은색 (텍스트)
+        
+        // 크기
+        private const val BUTTON_HEIGHT_DP = 48               // 모든 버튼의 높이 (dp)
+        private const val BUTTON_PADDING_HORIZONTAL_DP = 4    // 좌우 패딩 (dp)
+        private const val BUTTON_PADDING_VERTICAL_DP = 12     // 상하 패딩 (dp)
+        private const val BUTTON_MARGIN_DP = 2                // 버튼 간격 (dp)
+        private const val BUTTON_CORNER_RADIUS_DP = 8f        // 모서리 반지름 (dp)
+        private const val BUTTON_ELEVATION_DP = 2f            // 그림자 (dp)
+        
+        // 폰트 크기
+        private const val TEXT_SIZE_LARGE = 18f               // 큰 텍스트 (주요 키)
+        private const val TEXT_SIZE_MEDIUM = 16f              // 중간 텍스트 (기능 키)
+        private const val TEXT_SIZE_SMALL = 12f               // 작은 텍스트 (AI 제안)
     }
 
     // ==================== 키보드 상태 변수 ====================
@@ -141,10 +162,17 @@ class AIKeyboardService : InputMethodService() {
         suggestions.forEach { suggestion ->
             val button = Button(this).apply {
                 text = suggestion
-                layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+                layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply {
+                    height = BUTTON_HEIGHT_DP.dp()
+                    setMargins(BUTTON_MARGIN_DP, BUTTON_MARGIN_DP, BUTTON_MARGIN_DP, BUTTON_MARGIN_DP)
+                }
                 setOnClickListener { currentInputConnection?.commitText(suggestion, 1) }
-                setPadding(6, 6, 6, 6)
-                textSize = 12f
+                setPadding(BUTTON_PADDING_HORIZONTAL_DP, BUTTON_PADDING_VERTICAL_DP, 
+                          BUTTON_PADDING_HORIZONTAL_DP, BUTTON_PADDING_VERTICAL_DP)
+                textSize = TEXT_SIZE_SMALL
+                background = roundedBg(Color.parseColor(COLOR_LIGHT_GRAY), BUTTON_CORNER_RADIUS_DP)
+                setTextColor(Color.parseColor(COLOR_DARK_GRAY))
+                elevation = BUTTON_ELEVATION_DP
             }
             suggestionLayout.addView(button)
         }
@@ -490,8 +518,8 @@ class AIKeyboardService : InputMethodService() {
                 rowLayout.addView(keyButton)
             }
 
-            // 1번째 줄(맨 위) 오른쪽에 삭제 버튼
-            if (rowIdx == 0) {
+            // 3번째 줄(맨 아래) 오른쪽에 삭제 버튼
+            if (rowIdx == 2) {
                 val deleteBtn = Button(this).apply {
                     text = "⌫"
                     layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.6f).apply {
