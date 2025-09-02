@@ -6,7 +6,7 @@
  * AI 기반 자동완성 제안을 포함한 완벽한 한글 키보드를 구현합니다.
  * 
  * 주요 기능:
- * - 완벽한 한글 자판 레이아웃 (4줄 구성)
+ * - 완벽한 한글 자판 레이아웃 (3줄 구성)
  * - 숫자/기호 키보드 전환
  * - AI 제안 버튼 (안녕하세요!, 감사합니다, 좋은 하루 되세요)
  * - 기본 기능 키 (스페이스, 백스페이스, 엔터, 키보드 전환)
@@ -30,6 +30,10 @@ import android.graphics.Color
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.LinearLayout.LayoutParams
+import android.graphics.drawable.GradientDrawable
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import kotlin.math.max
 
 class AIKeyboardService : InputMethodService() {
     
@@ -41,48 +45,68 @@ class AIKeyboardService : InputMethodService() {
     private var isShiftPressed = false
     private lateinit var rootLayout: LinearLayout
 
+    // 확장 함수들
+    private fun Float.dp(): Int = (this * resources.displayMetrics.density).toInt()
+    private fun Int.dp(): Int = (this * resources.displayMetrics.density).toInt()
+
+    private fun roundedBg(color: Int, radiusDp: Float = 10f): GradientDrawable =
+        GradientDrawable().apply {
+            cornerRadius = radiusDp.dp().toFloat()
+            setColor(color)
+        }
+
+    private fun createFallbackKeyboard(): View {
+        return TextView(this).apply {
+            text = "키보드 로딩 중..."
+            setTextColor(Color.BLACK)
+            setBackgroundColor(Color.WHITE)
+            gravity = Gravity.CENTER
+            setPadding(32, 32, 32, 32)
+        }
+    }
+    
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "AIKeyboardService onCreate")
     }
 
     private fun renderKeyboard() {
-    // 전체를 새로 그립니다.
-    rootLayout.removeAllViews()
+        // 전체를 새로 그립니다.
+        rootLayout.removeAllViews()
 
-    // 1) AI 제안 영역
-    val suggestionLayout = LinearLayout(this).apply {
-        orientation = LinearLayout.HORIZONTAL
-        setPadding(0, 0, 0, 8)
-        layoutParams = LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-    }
-    val suggestions = listOf("안녕하세요!", "감사합니다", "좋은 하루 되세요", "사랑해요")
-    suggestions.forEach { suggestion ->
-        val button = Button(this).apply {
-            text = suggestion
-            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
-            setOnClickListener { currentInputConnection?.commitText(suggestion, 1) }
-            setPadding(6, 6, 6, 6)
-            textSize = 12f
+        // 1) AI 제안 영역
+        val suggestionLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, 0, 0, 8)
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
         }
-        suggestionLayout.addView(button)
+        
+        val suggestions = listOf("안녕하세요!", "감사합니다", "좋은 하루 되세요", "사랑해요")
+        suggestions.forEach { suggestion ->
+            val button = Button(this).apply {
+                text = suggestion
+                layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+                setOnClickListener { currentInputConnection?.commitText(suggestion, 1) }
+                setPadding(6, 6, 6, 6)
+                textSize = 12f
+            }
+            suggestionLayout.addView(button)
+        }
+        rootLayout.addView(suggestionLayout)
+
+        // 2) 본 키보드 (한글/숫자)
+        if (isNumberMode) {
+            createNumberKeyboard(rootLayout)
+        } else {
+            createHangulKeyboard(rootLayout)
+        }
+
+        // 3) 하단 기능 키들
+        createFunctionKeys(rootLayout)
     }
-    rootLayout.addView(suggestionLayout)
-
-    // 2) 본 키보드 (한글/숫자)
-    if (isNumberMode) {
-        createNumberKeyboard(rootLayout)
-    } else {
-        createHangulKeyboard(rootLayout)
-    }
-
-    // 3) 하단 기능 키들
-    createFunctionKeys(rootLayout)
-}
-
 
     override fun onCreateInputView(): View {
         Log.d(TAG, "onCreateInputView called")
@@ -96,6 +120,14 @@ class AIKeyboardService : InputMethodService() {
                     ViewGroup.LayoutParams.WRAP_CONTENT
                 )
             }
+
+            ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { v, insets ->
+                val sys = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+                )
+                v.setPadding(v.paddingLeft, v.paddingTop, v.paddingRight, max(v.paddingBottom, sys.bottom + 12.dp()))
+                insets
+            }
             renderKeyboard()  // <- 최초 렌더링
             rootLayout
         } catch (e: Exception) {
@@ -103,7 +135,6 @@ class AIKeyboardService : InputMethodService() {
             createFallbackKeyboard()
         }
     }
-    
 
     private fun createCompleteKeyboard(): View {
         val layout = LinearLayout(this).apply {
@@ -211,37 +242,29 @@ class AIKeyboardService : InputMethodService() {
             setPadding(0, 2, 0, 2)
         }
 
-        // 쉬프트키 (왼쪽) - 디자인 개선
+        // 쉬프트키 (왼쪽) - 칩 스타일 + 상태 색상
         val shiftButton = Button(this).apply {
-            text = if (isShiftPressed) "⇧ ON" else "⇧"
-            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.5f)
-            // setOnClickListener {
-            //     Log.d(TAG, "Shift button clicked! Current state: $isShiftPressed")
-            //     isShiftPressed = !isShiftPressed
-            //     Log.d(TAG, "Shift state changed to: $isShiftPressed")
-                
-            //     // 키보드 재시작하여 레이아웃 변경
-            //     try {
-            //         Log.d(TAG, "Restarting keyboard view...")
-            //         onFinishInputView(false)
-            //         onStartInputView(null, true)
-            //         Log.d(TAG, "Keyboard view restarted successfully")
-            //     } catch (e: Exception) {
-            //         Log.e(TAG, "Error restarting keyboard view", e)
-            //     }
-            // }
-            setOnClickListener {
-                Log.d(TAG, "Shift button clicked! Current state: $isShiftPressed")
-                isShiftPressed = !isShiftPressed
-                Log.d(TAG, "Shift state changed to: $isShiftPressed")
-                // 기존의 onFinishInputView/onStartInputView 제거
-                renderKeyboard() // <- 즉시 재렌더
-            }
-            
-            setPadding(4, 8, 4, 8)
-            textSize = 18f
-            setBackgroundColor(if (isShiftPressed) Color.parseColor("#2196F3") else Color.parseColor("#E0E0E0"))
+            text = if (isShiftPressed) "⇧" else "⇧"
+            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.7f)
+            background = roundedBg(
+                if (isShiftPressed) Color.parseColor("#2196F3") else Color.parseColor("#EDEDED"),
+                12f
+            )
             setTextColor(if (isShiftPressed) Color.WHITE else Color.BLACK)
+            setPadding(4, 10, 4, 10)
+            textSize = 18f
+            setOnClickListener {
+                isShiftPressed = !isShiftPressed
+                renderKeyboard() // 즉시 재렌더로 시각 반영
+            }
+            setOnLongClickListener {
+                // (선택) 길게 눌러 CAPS LOCK 유사 상태 토글을 만들고 싶다면 여기서 플래그 분리 가능
+                // ex) isCapsLocked = !isCapsLocked
+                // 현재는 단순히 강한 색상 유지 정도로 동작
+                isShiftPressed = true
+                renderKeyboard()
+                true
+            }
         }
         thirdRow.addView(shiftButton)
 
@@ -260,18 +283,21 @@ class AIKeyboardService : InputMethodService() {
             thirdRow.addView(keyButton)
         }
 
-        // 딜리트키 (오른쪽) - 디자인 개선
+        // 딜리트키 (오른쪽) - 칩 스타일
         val deleteButton = Button(this).apply {
             text = "⌫"
-            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.5f)
-            setOnClickListener {
-                Log.d(TAG, "Delete pressed")
-                currentInputConnection?.deleteSurroundingText(1, 0)
-            }
-            setPadding(4, 8, 4, 8)
-            textSize = 18f
-            setBackgroundColor(Color.parseColor("#E0E0E0"))
+            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.7f)
+            background = roundedBg(Color.parseColor("#EDEDED"), 12f)
             setTextColor(Color.BLACK)
+            setPadding(4, 10, 4, 10)
+            textSize = 18f
+            setOnClickListener { currentInputConnection?.deleteSurroundingText(1, 0) }
+            setOnLongClickListener {
+                // 길게 눌러 연속 삭제
+                // 간단 버전: 한 번에 조금 더 지우기
+                currentInputConnection?.deleteSurroundingText(5, 0)
+                true
+            }
         }
         thirdRow.addView(deleteButton)
 
@@ -289,21 +315,24 @@ class AIKeyboardService : InputMethodService() {
         numberRows.forEach { row ->
             val rowLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
-                setPadding(0, 2, 0, 2)
+                setPadding(4, 4, 4, 4)
             }
 
             row.forEach { key ->
                 val keyButton = Button(this).apply {
                     text = key
-                    layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
-                    setOnClickListener {
-                        isNumberMode = !isNumberMode
-                        Log.d(TAG, "Switching to ${if (isNumberMode) "number" else "hangul"} keyboard")
-                        renderKeyboard() // <- 즉시 재렌더
+                    layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply {
+                        setMargins(2, 2, 2, 2)
                     }
-                    
-                    setPadding(2, 2, 2, 2)
-                    textSize = 16f
+                    setOnClickListener {
+                        Log.d(TAG, "Number key pressed: $key")
+                        currentInputConnection?.commitText(key, 1)
+                    }
+                    setPadding(4, 12, 4, 12)
+                    textSize = 18f
+                    background = roundedBg(Color.parseColor("#FFFFFF"), 8f)
+                    setTextColor(Color.parseColor("#212121"))
+                    elevation = 2f
                 }
                 rowLayout.addView(keyButton)
             }
@@ -314,83 +343,79 @@ class AIKeyboardService : InputMethodService() {
     private fun createFunctionKeys(layout: LinearLayout) {
         val functionRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            setPadding(0, 4, 0, 0)
+            setPadding(4, 8, 4, 4)
         }
-
-        // 숫자 키
+    
+        // 🌐 언어/키보드 전환
+        val globeButton = Button(this).apply {
+            text = "🌐"
+            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.2f).apply {
+                setMargins(2, 2, 2, 2)
+            }
+            background = roundedBg(Color.parseColor("#E0E0E0"), 8f)
+            setPadding(4, 12, 4, 12)
+            textSize = 16f
+            setTextColor(Color.parseColor("#424242"))
+            elevation = 2f
+            setOnClickListener {
+                (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker()
+            }
+        }
+        functionRow.addView(globeButton)
+    
+        // 123 토글
         val numButton = Button(this).apply {
             text = "123"
-            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.5f)
+            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.2f).apply {
+                setMargins(2, 2, 2, 2)
+            }
+            background = roundedBg(Color.parseColor("#E0E0E0"), 8f)
+            setPadding(4, 12, 4, 12)
+            textSize = 16f
+            setTextColor(Color.parseColor("#424242"))
+            elevation = 2f
             setOnClickListener {
                 isNumberMode = !isNumberMode
                 Log.d(TAG, "Switching to ${if (isNumberMode) "number" else "hangul"} keyboard")
-                // 키보드 재시작
-                onFinishInputView(false)
-                onStartInputView(null, true)
+                renderKeyboard()
             }
-            setPadding(4, 4, 4, 4)
         }
         functionRow.addView(numButton)
-        
-        // 이모티콘
-        val emojiButton = Button(this).apply {
-            text = "😊"
-            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.5f)
-            setOnClickListener {
-                Log.d(TAG, "Emoji pressed")
-                currentInputConnection?.commitText("😊", 1)
-            }
-            setPadding(4, 4, 4, 4)
-        }
-        functionRow.addView(emojiButton)
-        
-        // 스페이스
+    
+        // 스페이스(넓게)
         val spaceButton = Button(this).apply {
             text = "스페이스"
-            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 2f)
-            setOnClickListener {
-                Log.d(TAG, "Space pressed")
-                currentInputConnection?.commitText(" ", 1)
+            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 3.5f).apply {
+                setMargins(2, 2, 2, 2)
             }
-            setPadding(4, 4, 4, 4)
+            background = roundedBg(Color.parseColor("#FFFFFF"), 8f)
+            setPadding(4, 12, 4, 12)
+            textSize = 16f
+            setTextColor(Color.parseColor("#212121"))
+            elevation = 2f
+            setOnClickListener { currentInputConnection?.commitText(" ", 1) }
         }
         functionRow.addView(spaceButton)
-        
+    
         // 엔터
         val enterButton = Button(this).apply {
             text = "↵"
-            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.5f)
-            setOnClickListener {
-                Log.d(TAG, "Enter pressed")
-                currentInputConnection?.performEditorAction(EditorInfo.IME_ACTION_DONE)
+            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.6f).apply {
+                setMargins(2, 2, 2, 2)
             }
-            setPadding(4, 4, 4, 4)
+            background = roundedBg(Color.parseColor("#E0E0E0"), 8f)
+            setPadding(4, 12, 4, 12)
+            textSize = 16f
+            setTextColor(Color.parseColor("#424242"))
+            elevation = 2f
+            setOnClickListener {
+                val handled = currentInputConnection?.performEditorAction(EditorInfo.IME_ACTION_DONE)
+                if (handled != true) currentInputConnection?.commitText("\n", 1)
+            }
         }
         functionRow.addView(enterButton)
-
-        // 영어
-        val englishButton = Button(this).apply {
-            text = "영어"
-            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.5f)
-            setOnClickListener {
-                Log.d(TAG, "English pressed")
-                // 영어 키보드로 전환 (향후 구현)
-            }
-            setPadding(4, 4, 4, 4)
-        }
-        functionRow.addView(englishButton)
-
+    
         layout.addView(functionRow)
-    }
-
-    private fun createFallbackKeyboard(): View {
-        return TextView(this).apply {
-            text = "키보드 로딩 중..."
-            setTextColor(Color.BLACK)
-            setBackgroundColor(Color.WHITE)
-            gravity = Gravity.CENTER
-            setPadding(32, 32, 32, 32)
-        }
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
@@ -400,7 +425,6 @@ class AIKeyboardService : InputMethodService() {
             renderKeyboard()
         }
     }
-    
 
     override fun onFinishInputView(finishingInput: Boolean) {
         super.onFinishInputView(finishingInput)
