@@ -24,6 +24,8 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.util.Log
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.ExtractedText
+import android.view.inputmethod.ExtractedTextRequest
 import android.widget.LinearLayout
 import android.widget.FrameLayout
 import android.widget.Button
@@ -86,7 +88,7 @@ class AIKeyboardService : InputMethodService() {
     private lateinit var rootLayout: LinearLayout  // 메인 키보드 레이아웃
     private lateinit var aiFeatureOverlay: AIFeatureOverlay  // AI 기능 오버레이
     private lateinit var contentContainer: FrameLayout  // 키보드/오버레이가 교대로 들어갈 컨테이너
-    private var currentInputText = ""  // 현재 입력 중인 텍스트
+    private var currentInputText = ""  // 현재 입력 중인 텍스트 (기본값, 주로 선택 텍스트 우선)
 
     // ==================== 유틸리티 함수들 ====================
     
@@ -212,21 +214,72 @@ class AIKeyboardService : InputMethodService() {
      * 리라이팅 옵션 표시
      */
     private fun showRewritingOptions() {
-        aiFeatureOverlay.showRewritingOptions(currentInputConnection, currentInputText)
+        val text = getSelectedOrContextText()
+        aiFeatureOverlay.showRewritingOptions(currentInputConnection, text)
     }
     
     /**
      * 맞춤법 검사 결과 표시
      */
     private fun showSpellCheckResult() {
-        aiFeatureOverlay.showSpellCheckResult(currentInputConnection, currentInputText)
+        val text = getSelectedOrContextText()
+        aiFeatureOverlay.showSpellCheckResult(currentInputConnection, text)
     }
     
     /**
      * 일정 추가 UI 표시
      */
     private fun showScheduleAddUI() {
-        aiFeatureOverlay.showScheduleAddUI(currentInputConnection, currentInputText)
+        val text = getSelectedOrContextText()
+        aiFeatureOverlay.showScheduleAddUI(currentInputConnection, text)
+    }
+
+    /**
+     * 현재 선택된 텍스트가 있으면 반환, 없으면 커서 주변 텍스트를 추출
+     */
+    private fun getSelectedOrContextText(): String {
+        val ic = currentInputConnection ?: return currentInputText
+
+        // 1) 선택된 텍스트 우선
+        try {
+            val selected = ic.getSelectedText(0)
+            if (selected != null && selected.isNotEmpty()) {
+                return selected.toString()
+            }
+        } catch (_: Exception) {}
+
+        // 2) ExtractedText로 전체/부분 텍스트 가져오기 (가능한 경우)
+        try {
+            val req = ExtractedTextRequest()
+            val extracted: ExtractedText? = ic.getExtractedText(req, 0)
+            if (extracted != null) {
+                // 커서 위치 기준으로 앞뒤 일부만 사용 (길이 제한)
+                val text = extracted.text?.toString() ?: ""
+                val start = extracted.selectionStart.coerceAtLeast(0)
+                val end = extracted.selectionEnd.coerceAtLeast(start)
+                if (text.isNotEmpty()) {
+                    // 선택이 없으면 커서 주변 120자 내외로 컨텍스트 제공
+                    if (start == end) {
+                        val left = (start - 60).coerceAtLeast(0)
+                        val right = (start + 60).coerceAtMost(text.length)
+                        return text.substring(left, right)
+                    } else {
+                        return text.substring(start, end)
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
+        // 3) 주변 텍스트 API
+        try {
+            val before = ic.getTextBeforeCursor(60, 0) ?: ""
+            val after = ic.getTextAfterCursor(60, 0) ?: ""
+            val combined = before.toString() + after.toString()
+            if (combined.isNotEmpty()) return combined
+        } catch (_: Exception) {}
+
+        // 폴백: 마지막으로 추적한 텍스트
+        return currentInputText
     }
 
     // ==================== 키보드 생성 메서드들 ====================
