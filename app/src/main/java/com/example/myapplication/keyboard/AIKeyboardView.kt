@@ -1,3 +1,20 @@
+/**
+ * AI 키보드 UI 컴포넌트 (Jetpack Compose)
+ * 
+ * 이 파일은 Jetpack Compose를 사용하여 AI 키보드의 사용자 인터페이스를 정의합니다.
+ * 현재는 사용되지 않지만, 향후 Compose 기반 키보드로 전환할 때 사용할 수 있습니다.
+ * 
+ * 주요 구성 요소:
+ * - AI 예측 제안 영역 (안녕하세요!, 감사합니다, 좋은 하루 되세요)
+ * - 한글 자판 레이아웃 (3줄 구성)
+ * - 기능 키들 (숫자 전환, 스페이스, 백스페이스, 엔터)
+ * - Material Design 3 기반 UI
+ * - 반응형 레이아웃 및 상태 관리
+ * 
+ * @author SEASONTHON TEAM 8
+ * @version 1.0.0
+ * @note 현재 AIKeyboardService에서 Android View 기반으로 대체됨
+ */
 package com.example.myapplication.keyboard
 
 import androidx.compose.foundation.background

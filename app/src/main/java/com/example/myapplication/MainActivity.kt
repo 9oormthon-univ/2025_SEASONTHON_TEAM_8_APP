@@ -1,3 +1,21 @@
+/**
+ * AI 자동완성 키보드 메인 액티비티
+ * 
+ * 이 액티비티는 AI 키보드 앱의 메인 화면을 제공합니다.
+ * 사용자가 앱을 처음 실행했을 때 보게 되는 시작 화면으로,
+ * 키보드 테스트, 설정, 시스템 설정 연동 등의 기능을 포함합니다.
+ * 
+ * 주요 기능:
+ * - 앱 소개 및 로고 표시
+ * - 키보드 테스트를 위한 텍스트 입력 필드
+ * - 키보드 설정 화면으로 이동하는 버튼
+ * - 시스템 설정으로 직접 이동하는 버튼
+ * - 주요 기능 설명 및 가이드
+ * - Material Design 3 기반 UI
+ * 
+ * @author SEASONTHON TEAM 8
+ * @version 1.0.0
+ */
 package com.example.myapplication
 
 import android.content.Intent

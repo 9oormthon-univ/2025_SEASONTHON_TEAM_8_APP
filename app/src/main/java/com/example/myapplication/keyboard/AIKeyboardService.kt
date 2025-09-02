@@ -1,3 +1,20 @@
+/**
+ * AI 자동완성 키보드 서비스
+ * 
+ * 이 클래스는 Android 시스템의 입력 메서드 서비스(IME)를 구현합니다.
+ * 사용자가 텍스트를 입력할 때 나타나는 키보드 UI를 제공하고,
+ * AI 기반 자동완성 제안을 포함한 한글 키보드를 구현합니다.
+ * 
+ * 주요 기능:
+ * - 한글 자판 레이아웃 (3줄 구성)
+ * - AI 제안 버튼 (안녕하세요!, 감사합니다, 좋은 하루 되세요)
+ * - 기본 기능 키 (스페이스, 백스페이스, 엔터, 숫자 전환)
+ * - 안정적인 Android View 기반 UI
+ * - 오류 발생 시 폴백 키보드 제공
+ * 
+ * @author SEASONTHON TEAM 8
+ * @version 1.0.0
+ */
 package com.example.myapplication.keyboard
 
 import android.inputmethodservice.InputMethodService
