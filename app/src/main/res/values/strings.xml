@@ -1,3 +1,13 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">AI Keyboard</string>
+    <string name="ai_keyboard_name">AI 자동완성 키보드</string>
+    <string name="keyboard_settings">키보드 설정</string>
+    <string name="enable_keyboard">키보드 활성화</string>
+    <string name="keyboard_enabled">키보드가 활성화되었습니다!</string>
+    <string name="keyboard_disabled">키보드가 비활성화되었습니다.</string>
+    <string name="ai_prediction">AI 예측</string>
+    <string name="settings">설정</string>
+    <string name="about">정보</string>
+    <string name="version">버전</string>
+    <string name="app_version">v1.0.0</string>
 </resources>
