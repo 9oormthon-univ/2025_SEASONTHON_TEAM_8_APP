@@ -9,13 +9,13 @@
  * - 완벽한 한글 자판 레이아웃 (3줄 구성, 쉬프트키로 쌍자음/쌍모음)
  * - QWERTY 영어 키보드 (대소문자 전환 지원)
  * - 확장된 숫자/기호 키보드 (기본 + 확장 기호)
- * - AI 제안 버튼 (언어별 맞춤 문구)
+ * - AI 기능 버튼 (리라이팅, 맞춤법 검사, 일정 추가)
  * - 한/영/숫자 모드 전환
  * - 안정적인 Android View 기반 UI
  * - 오류 발생 시 폴백 키보드 제공
  * 
  * @author SEASONTHON TEAM 8
- * @version 2.0.0
+ * @version 3.0.0
  */
 package com.example.myapplication.keyboard
 
@@ -25,6 +25,7 @@ import android.view.inputmethod.InputMethodManager
 import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout
+import android.widget.FrameLayout
 import android.widget.Button
 import android.widget.TextView
 import android.graphics.Color
@@ -43,6 +44,11 @@ import kotlin.math.max
  * 1. 한글 키보드: 3줄 구성, 쉬프트키로 쌍자음/쌍모음 전환
  * 2. 영어 키보드: QWERTY 레이아웃, 쉬프트키로 대소문자 전환
  * 3. 숫자 키보드: 기본 기호 + 확장 기호를 Alt 모드로 전환
+ * 
+ * AI 기능:
+ * 1. 리라이팅: 공손체, 친근체, 단답체 등 문체 변환
+ * 2. 맞춤법 검사: 작성 중인 텍스트의 맞춤법 검사 및 수정
+ * 3. 일정 추가: 텍스트에서 일정 정보 추출하여 캘린더 등록
  */
 class AIKeyboardService : InputMethodService() {
     
@@ -78,6 +84,9 @@ class AIKeyboardService : InputMethodService() {
     private var isSymbolAltMode = false  // 숫자 키보드의 확장 기호 모드
 
     private lateinit var rootLayout: LinearLayout  // 메인 키보드 레이아웃
+    private lateinit var aiFeatureOverlay: AIFeatureOverlay  // AI 기능 오버레이
+    private lateinit var contentContainer: FrameLayout  // 키보드/오버레이가 교대로 들어갈 컨테이너
+    private var currentInputText = ""  // 현재 입력 중인 텍스트
 
     // ==================== 유틸리티 함수들 ====================
     
@@ -116,6 +125,9 @@ class AIKeyboardService : InputMethodService() {
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "AIKeyboardService onCreate")
+        
+        // AI 기능 오버레이 초기화
+        aiFeatureOverlay = AIFeatureOverlay(this)
     }
 
     // ==================== 키보드 렌더링 메서드 ====================
@@ -125,58 +137,51 @@ class AIKeyboardService : InputMethodService() {
      * 모드 변경 시 호출되어 UI를 즉시 업데이트합니다.
      */
     private fun renderKeyboard() {
-        // 기존 뷰들을 모두 제거
+        // 루트에는 항상: 상단 기능 버튼 + 콘텐츠 컨테이너
         rootLayout.removeAllViews()
 
-        // 1) AI 제안 영역 렌더링
-        renderAISuggestions()
-        
-        // 2) 메인 키보드 렌더링 (모드별)
-        renderMainKeyboard()
-        
-        // 3) 하단 기능 키들 렌더링
-        createFunctionKeys(rootLayout)
-    }
+        // 1) AI 기능 버튼들
+        renderAIFeatureButtons()
 
-    /**
-     * AI 제안 버튼들을 렌더링
-     * 현재 언어 모드에 따라 다른 제안 문구를 표시
-     */
-    private fun renderAISuggestions() {
-        val suggestionLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(0, 0, 0, 8)
+        // 2) 콘텐츠 컨테이너 (키보드 또는 오버레이가 들어감)
+        if (!this::contentContainer.isInitialized) {
+            contentContainer = FrameLayout(this).apply {
+                layoutParams = LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            }
+        }
+        // 오버레이가 보여지는 중이 아니라면 키보드 렌더링
+        rootLayout.addView(contentContainer)
+        contentContainer.removeAllViews()
+
+        // 키보드 전용 레이아웃을 만들어 컨테이너에 넣음
+        val keyboardLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
+        // 메인 키보드 + 하단 기능키를 키보드 레이아웃에 렌더링
+        renderMainKeyboardInto(keyboardLayout)
+        createFunctionKeys(keyboardLayout)
 
-        // 언어별 맞춤 제안 문구
-        val suggestions = if (isEnglishMode) {
-            listOf("Hello!", "Thank you", "Have a nice day", "Love you")
-        } else {
-            listOf("안녕하세요!", "감사합니다", "좋은 하루 되세요", "사랑해요")
-        }
+        contentContainer.addView(keyboardLayout)
+    }
 
-        suggestions.forEach { suggestion ->
-            val button = Button(this).apply {
-                text = suggestion
-                layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply {
-                    height = BUTTON_HEIGHT_DP.dp()
-                    setMargins(BUTTON_MARGIN_DP, BUTTON_MARGIN_DP, BUTTON_MARGIN_DP, BUTTON_MARGIN_DP)
-                }
-                setOnClickListener { currentInputConnection?.commitText(suggestion, 1) }
-                setPadding(BUTTON_PADDING_HORIZONTAL_DP, BUTTON_PADDING_VERTICAL_DP, 
-                          BUTTON_PADDING_HORIZONTAL_DP, BUTTON_PADDING_VERTICAL_DP)
-                textSize = TEXT_SIZE_SMALL
-                background = roundedBg(Color.parseColor(COLOR_LIGHT_GRAY), BUTTON_CORNER_RADIUS_DP)
-                setTextColor(Color.parseColor(COLOR_DARK_GRAY))
-                elevation = BUTTON_ELEVATION_DP
-            }
-            suggestionLayout.addView(button)
-        }
-        rootLayout.addView(suggestionLayout)
+    /**
+     * AI 기능 버튼들을 렌더링
+     * 리라이팅, 맞춤법 검사, 일정 추가 기능 제공
+     */
+    private fun renderAIFeatureButtons() {
+        val featureButtons = aiFeatureOverlay.createAIFeatureButtons(
+            onRewritingClick = { showRewritingOptions() },
+            onSpellCheckClick = { showSpellCheckResult() },
+            onScheduleAddClick = { showScheduleAddUI() }
+        )
+        rootLayout.addView(featureButtons)
     }
 
     /**
@@ -188,6 +193,40 @@ class AIKeyboardService : InputMethodService() {
             isEnglishMode  -> createEnglishKeyboard(rootLayout)
             else           -> createHangulKeyboard(rootLayout)
         }
+    }
+
+    /**
+     * 메인 키보드를 외부 레이아웃으로 렌더링 (컨테이너용)
+     */
+    private fun renderMainKeyboardInto(targetLayout: LinearLayout) {
+        when {
+            isNumberMode   -> createNumberKeyboard(targetLayout)
+            isEnglishMode  -> createEnglishKeyboard(targetLayout)
+            else           -> createHangulKeyboard(targetLayout)
+        }
+    }
+    
+    // ==================== AI 기능 메서드들 ====================
+    
+    /**
+     * 리라이팅 옵션 표시
+     */
+    private fun showRewritingOptions() {
+        aiFeatureOverlay.showRewritingOptions(currentInputConnection, currentInputText)
+    }
+    
+    /**
+     * 맞춤법 검사 결과 표시
+     */
+    private fun showSpellCheckResult() {
+        aiFeatureOverlay.showSpellCheckResult(currentInputConnection, currentInputText)
+    }
+    
+    /**
+     * 일정 추가 UI 표시
+     */
+    private fun showScheduleAddUI() {
+        aiFeatureOverlay.showScheduleAddUI(currentInputConnection, currentInputText)
     }
 
     // ==================== 키보드 생성 메서드들 ====================
@@ -461,7 +500,7 @@ class AIKeyboardService : InputMethodService() {
         val numberRowsPrimary = listOf(
             listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),           // 1줄: 숫자
             listOf("-", "/", ":", ";", "(", ")", "$", "&", "@", "\""),          // 2줄: 기본 기호
-            listOf(".", ",", "?", "!", "'", "~", "#", "%", "+", "=")            // 3줄: 기본 기호
+            listOf(".", ",", "?", "!", "'", "\"")                               // 3줄: 문장 부호
         )
         
         // 확장 기호 레이아웃 (Alt 모드)
@@ -668,6 +707,26 @@ class AIKeyboardService : InputMethodService() {
                 insets
             }
             
+            // AI 기능 오버레이 초기화 및 컨테이너 연결
+            if (!this::aiFeatureOverlay.isInitialized) {
+                aiFeatureOverlay = AIFeatureOverlay(this)
+            }
+            if (!this::contentContainer.isInitialized) {
+                contentContainer = FrameLayout(this).apply {
+                    layoutParams = LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                    )
+                }
+            }
+            aiFeatureOverlay.attach(
+                container = contentContainer,
+                onClose = {
+                    // 닫기 시 키보드 다시 렌더링
+                    renderKeyboard()
+                }
+            )
+            
             renderKeyboard()  // 최초 렌더링
             rootLayout
         } catch (e: Exception) {
@@ -682,6 +741,10 @@ class AIKeyboardService : InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         Log.d(TAG, "onStartInputView: restarting=$restarting")
+        
+        // 현재 입력 텍스트 초기화
+        currentInputText = ""
+        
         if (this::rootLayout.isInitialized) {
             renderKeyboard()
         }
