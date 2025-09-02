@@ -39,21 +39,71 @@ class AIKeyboardService : InputMethodService() {
 
     private var isNumberMode = false
     private var isShiftPressed = false
+    private lateinit var rootLayout: LinearLayout
 
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "AIKeyboardService onCreate")
     }
 
+    private fun renderKeyboard() {
+    // 전체를 새로 그립니다.
+    rootLayout.removeAllViews()
+
+    // 1) AI 제안 영역
+    val suggestionLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        setPadding(0, 0, 0, 8)
+        layoutParams = LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+    }
+    val suggestions = listOf("안녕하세요!", "감사합니다", "좋은 하루 되세요", "사랑해요")
+    suggestions.forEach { suggestion ->
+        val button = Button(this).apply {
+            text = suggestion
+            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+            setOnClickListener { currentInputConnection?.commitText(suggestion, 1) }
+            setPadding(6, 6, 6, 6)
+            textSize = 12f
+        }
+        suggestionLayout.addView(button)
+    }
+    rootLayout.addView(suggestionLayout)
+
+    // 2) 본 키보드 (한글/숫자)
+    if (isNumberMode) {
+        createNumberKeyboard(rootLayout)
+    } else {
+        createHangulKeyboard(rootLayout)
+    }
+
+    // 3) 하단 기능 키들
+    createFunctionKeys(rootLayout)
+}
+
+
     override fun onCreateInputView(): View {
         Log.d(TAG, "onCreateInputView called")
         return try {
-            createCompleteKeyboard()
+            rootLayout = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setBackgroundColor(Color.WHITE)
+                setPadding(8, 8, 8, 8)
+                layoutParams = LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            }
+            renderKeyboard()  // <- 최초 렌더링
+            rootLayout
         } catch (e: Exception) {
             Log.e(TAG, "Error creating keyboard: ${e.message}")
             createFallbackKeyboard()
         }
     }
+    
 
     private fun createCompleteKeyboard(): View {
         val layout = LinearLayout(this).apply {
@@ -163,15 +213,31 @@ class AIKeyboardService : InputMethodService() {
 
         // 쉬프트키 (왼쪽) - 디자인 개선
         val shiftButton = Button(this).apply {
-            text = "⇧"
+            text = if (isShiftPressed) "⇧ ON" else "⇧"
             layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1.5f)
+            // setOnClickListener {
+            //     Log.d(TAG, "Shift button clicked! Current state: $isShiftPressed")
+            //     isShiftPressed = !isShiftPressed
+            //     Log.d(TAG, "Shift state changed to: $isShiftPressed")
+                
+            //     // 키보드 재시작하여 레이아웃 변경
+            //     try {
+            //         Log.d(TAG, "Restarting keyboard view...")
+            //         onFinishInputView(false)
+            //         onStartInputView(null, true)
+            //         Log.d(TAG, "Keyboard view restarted successfully")
+            //     } catch (e: Exception) {
+            //         Log.e(TAG, "Error restarting keyboard view", e)
+            //     }
+            // }
             setOnClickListener {
+                Log.d(TAG, "Shift button clicked! Current state: $isShiftPressed")
                 isShiftPressed = !isShiftPressed
-                Log.d(TAG, "Shift pressed: $isShiftPressed")
-                // 키보드 재시작하여 레이아웃 변경
-                onFinishInputView(false)
-                onStartInputView(null, true)
+                Log.d(TAG, "Shift state changed to: $isShiftPressed")
+                // 기존의 onFinishInputView/onStartInputView 제거
+                renderKeyboard() // <- 즉시 재렌더
             }
+            
             setPadding(4, 8, 4, 8)
             textSize = 18f
             setBackgroundColor(if (isShiftPressed) Color.parseColor("#2196F3") else Color.parseColor("#E0E0E0"))
@@ -231,9 +297,11 @@ class AIKeyboardService : InputMethodService() {
                     text = key
                     layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
                     setOnClickListener {
-                        Log.d(TAG, "Number key pressed: $key")
-                        currentInputConnection?.commitText(key, 1)
+                        isNumberMode = !isNumberMode
+                        Log.d(TAG, "Switching to ${if (isNumberMode) "number" else "hangul"} keyboard")
+                        renderKeyboard() // <- 즉시 재렌더
                     }
+                    
                     setPadding(2, 2, 2, 2)
                     textSize = 16f
                 }
@@ -328,7 +396,11 @@ class AIKeyboardService : InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         Log.d(TAG, "onStartInputView: restarting=$restarting")
+        if (this::rootLayout.isInitialized) {
+            renderKeyboard()
+        }
     }
+    
 
     override fun onFinishInputView(finishingInput: Boolean) {
         super.onFinishInputView(finishingInput)
