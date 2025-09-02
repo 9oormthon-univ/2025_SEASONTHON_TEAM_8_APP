@@ -11,8 +11,9 @@ import android.widget.LinearLayout.LayoutParams
 import android.graphics.drawable.GradientDrawable
 
 /**
- * AI 기능들을 관리하는 클래스
- * 리라이팅, 맞춤법 검사, 일정 추가 기능을 담당
+ * 상단 기능 버튼 바를 생성/관리하는 헬퍼
+ * - 리라이팅 / 맞춤법 / 일정추가 버튼을 균등 폭으로 생성
+ * - 클릭 콜백은 외부(AIFeatureOverlay/Service)에서 주입
  */
 class AIFeatureManager(private val context: Context) {
     

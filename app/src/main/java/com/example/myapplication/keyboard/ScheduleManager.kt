@@ -15,8 +15,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 /**
- * 일정 추가 기능을 담당하는 클래스
- * 텍스트에서 일정 정보를 추출하고 캘린더에 등록
+ * 일정 추가 UI 생성 및 더미 추출/등록 처리
+ * - 자연어 텍스트에서 장소/날짜/시간/메모를 추출(샘플)
+ * - 사용자가 필드를 수정 후 "일정 등록" 시 결과를 입력창에 커밋
  */
 class ScheduleManager(private val context: Context) {
     

@@ -12,8 +12,8 @@ import android.graphics.drawable.GradientDrawable
 import android.view.inputmethod.InputConnection
 
 /**
- * 맞춤법 검사 기능을 담당하는 클래스
- * 작성 중인 텍스트의 맞춤법을 검사하고 수정 제안
+ * 맞춤법 검사 UI 생성 및 더미 검사/수정 처리
+ * - 오류 리스트를 카드 형태로 보여주고, 항목별 수정 또는 일괄 확인 제공
  */
 class SpellCheckManager(private val context: Context) {
     

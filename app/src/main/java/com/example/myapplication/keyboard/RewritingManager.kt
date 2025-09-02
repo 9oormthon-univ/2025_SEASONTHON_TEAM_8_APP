@@ -12,8 +12,8 @@ import android.graphics.drawable.GradientDrawable
 import android.view.inputmethod.InputConnection
 
 /**
- * 리라이팅 기능을 담당하는 클래스
- * 공손체, 친근체, 단답체 등 문체 변환 기능 제공
+ * 리라이팅(문체 변환) UI를 생성하고 결과를 입력창에 반영
+ * - 더미(샘플) 변환을 적용하며, 실제 AI 연결 시 이 부분만 교체하면 됨
  */
 class RewritingManager(private val context: Context) {
     

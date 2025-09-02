@@ -86,9 +86,11 @@ class AIKeyboardService : InputMethodService() {
     private var isSymbolAltMode = false  // 숫자 키보드의 확장 기호 모드
 
     private lateinit var rootLayout: LinearLayout  // 메인 키보드 레이아웃
-    private lateinit var aiFeatureOverlay: AIFeatureOverlay  // AI 기능 오버레이
+    private lateinit var aiFeatureOverlay: AIFeatureOverlay  // AI 기능 오버레이 (키보드 영역을 대체 표시)
     private lateinit var contentContainer: FrameLayout  // 키보드/오버레이가 교대로 들어갈 컨테이너
     private var currentInputText = ""  // 현재 입력 중인 텍스트 (기본값, 주로 선택 텍스트 우선)
+    // 한글 자모 조합기: 자음/모음 입력을 받아 조합 상태로 표시하고, 스페이스/엔터/전환 시 커밋합니다.
+    private val hangulComposer = HangulComposer()
 
     // ==================== 유틸리티 함수들 ====================
     
@@ -199,6 +201,7 @@ class AIKeyboardService : InputMethodService() {
 
     /**
      * 메인 키보드를 외부 레이아웃으로 렌더링 (컨테이너용)
+     * - 키보드 본체 레이아웃을 만들어 `contentContainer`에 삽입할 때 사용
      */
     private fun renderMainKeyboardInto(targetLayout: LinearLayout) {
         when {
@@ -235,7 +238,8 @@ class AIKeyboardService : InputMethodService() {
     }
 
     /**
-     * 현재 선택된 텍스트가 있으면 반환, 없으면 커서 주변 텍스트를 추출
+     * 현재 선택된 텍스트가 있으면 해당 범위를, 없으면 커서 주변 컨텍스트를 추출
+     * 우선순위: 선택 텍스트 > ExtractedText(커서 앞뒤 60자) > getTextBefore/AfterCursor > 폴백
      */
     private fun getSelectedOrContextText(): String {
         val ic = currentInputConnection ?: return currentInputText
@@ -317,7 +321,7 @@ class AIKeyboardService : InputMethodService() {
                 layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
                 setOnClickListener {
                     Log.d(TAG, "Hangul key pressed: $key")
-                    currentInputConnection?.commitText(key, 1)
+                    hangulComposer.input(key, currentInputConnection)
                 }
                 setPadding(2, 2, 2, 2)
                 textSize = 16f
@@ -338,7 +342,7 @@ class AIKeyboardService : InputMethodService() {
                 layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
                 setOnClickListener {
                     Log.d(TAG, "Hangul key pressed: $key")
-                    currentInputConnection?.commitText(key, 1)
+                    hangulComposer.input(key, currentInputConnection)
                 }
                 setPadding(2, 2, 2, 2)
                 textSize = 16f
@@ -384,7 +388,7 @@ class AIKeyboardService : InputMethodService() {
                 layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
                 setOnClickListener {
                     Log.d(TAG, "Hangul key pressed: $key")
-                    currentInputConnection?.commitText(key, 1)
+                    hangulComposer.input(key, currentInputConnection)
                 }
                 setPadding(2, 2, 2, 2)
                 textSize = 16f
@@ -400,7 +404,11 @@ class AIKeyboardService : InputMethodService() {
             setTextColor(Color.BLACK)
             setPadding(4, 10, 4, 10)
             textSize = 18f
-            setOnClickListener { currentInputConnection?.deleteSurroundingText(1, 0) }
+            setOnClickListener {
+                // 조합 중이면 단계 삭제, 아니면 일반 삭제
+                val consumed = hangulComposer.backspace(currentInputConnection)
+                if (!consumed) currentInputConnection?.deleteSurroundingText(1, 0)
+            }
             setOnLongClickListener {
                 // 길게 누르면 연속 삭제
                 currentInputConnection?.deleteSurroundingText(5, 0)
@@ -662,6 +670,8 @@ class AIKeyboardService : InputMethodService() {
                 isShiftPressed = false
                 // 숫자 모드였다면 해제 (사용자 혼란 방지)
                 if (isNumberMode) isNumberMode = false
+                // 모드 전환 전 조합 커밋
+                hangulComposer.commitPending(currentInputConnection)
                 renderKeyboard()
             }
             setOnLongClickListener {
@@ -689,6 +699,8 @@ class AIKeyboardService : InputMethodService() {
                 isNumberMode = !isNumberMode
                 Log.d(TAG, "Switching to ${if (isNumberMode) "number" else "hangul"} keyboard")
                 if (!isNumberMode) isSymbolAltMode = false  // 문자→숫자 진입 시 false로 맞춤
+                // 모드 전환 전 조합 커밋
+                hangulComposer.commitPending(currentInputConnection)
                 renderKeyboard()
             }
         }
@@ -705,7 +717,11 @@ class AIKeyboardService : InputMethodService() {
             textSize = 16f
             setTextColor(Color.parseColor("#212121"))
             elevation = 2f
-            setOnClickListener { currentInputConnection?.commitText(" ", 1) }
+            setOnClickListener {
+                // 공백 전 조합 커밋
+                hangulComposer.commitPending(currentInputConnection)
+                currentInputConnection?.commitText(" ", 1)
+            }
         }
         functionRow.addView(spaceButton)
 
@@ -721,6 +737,8 @@ class AIKeyboardService : InputMethodService() {
             setTextColor(Color.parseColor("#424242"))
             elevation = 2f
             setOnClickListener {
+                // 엔터 전 조합 커밋
+                hangulComposer.commitPending(currentInputConnection)
                 val handled = currentInputConnection?.performEditorAction(EditorInfo.IME_ACTION_DONE)
                 if (handled != true) currentInputConnection?.commitText("\n", 1)
             }
