@@ -34,20 +34,33 @@ fun MainScreen() {
     val scope = rememberCoroutineScope()
     
     // 현재 선택된 화면을 추적하는 상태 변수
-    var selectedScreen by remember { mutableStateOf("home") }
+    var selectedScreen by remember { mutableStateOf("onboarding") }
     
-    // 모달 네비게이션 드로어 구현
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            // 드로어 내용 (AppDrawer 컴포넌트 사용)
-            AppDrawer(
-                selectedScreen = selectedScreen,
-                onScreenSelected = { screen -> selectedScreen = screen },
-                onDrawerClose = { scope.launch { drawerState.close() } }
-            )
-        }
-    ) {
+    // 온보딩 완료 상태
+    var isOnboardingCompleted by remember { mutableStateOf(false) }
+    
+    // 온보딩 화면에서는 드로어 없이 풀스크린
+    if (selectedScreen == "onboarding") {
+        // 온보딩 화면만 표시
+        OnboardingScreen(
+            onGetStarted = { 
+                selectedScreen = "home"
+                isOnboardingCompleted = true
+            }
+        )
+    } else {
+        // 일반 화면들 - 드로어와 함께
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                // 드로어 내용 (AppDrawer 컴포넌트 사용)
+                AppDrawer(
+                    selectedScreen = selectedScreen,
+                    onScreenSelected = { screen -> selectedScreen = screen },
+                    onDrawerClose = { scope.launch { drawerState.close() } }
+                )
+            }
+        ) {
         // 메인 콘텐츠 영역
         Scaffold(
             topBar = {
@@ -69,12 +82,13 @@ fun MainScreen() {
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // 선택된 화면에 따라 적절한 컴포넌트 렌더링
-                when (selectedScreen) {
-                    "home" -> HomeScreen()           // 홈 화면
-                    "settings" -> SettingsScreen()   // 설정 화면
-                    "keyboard_test" -> KeyboardTestScreen()  // 키보드 테스트 화면
-                    "help" -> HelpScreen()           // 도움말 화면
+                    // 선택된 화면에 따라 적절한 컴포넌트 렌더링
+                    when (selectedScreen) {
+                        "home" -> HomeScreen()           // 홈 화면
+                        "settings" -> SettingsScreen()   // 설정 화면
+                        "keyboard_test" -> KeyboardTestScreen()  // 키보드 테스트 화면
+                        "help" -> HelpScreen()           // 도움말 화면
+                    }
                 }
             }
         }
