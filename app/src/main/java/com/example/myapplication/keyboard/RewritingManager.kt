@@ -94,7 +94,19 @@ class RewritingManager(private val context: Context) {
         }
         optionsLayout.addView(titleText)
         
-        // 문체 옵션들 (키보드 크기에 맞춰 줄임)
+        // 문체 선택 칩들을 가로로 배치
+        val chipContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 16.dp())
+            }
+            gravity = android.view.Gravity.CENTER_HORIZONTAL
+        }
+        
+        // 문체 옵션들 (칩 형태로 가로 배치)
         val styleOptions = listOf(
             "공손체" to "안녕하십니까.",
             "친근체" to "안녕!",
@@ -103,39 +115,83 @@ class RewritingManager(private val context: Context) {
         )
         
         styleOptions.forEach { (styleName, exampleText) ->
-            val styleButton = createStyleButton(styleName, exampleText) { 
+            val styleChip = createStyleChip(styleName, exampleText) { 
                 // 더미 데이터로 수정된 텍스트 적용
                 val rewrittenText = getRewrittenText(currentText, styleName)
                 inputConnection?.commitText(rewrittenText, 1)
             }
-            optionsLayout.addView(styleButton)
+            chipContainer.addView(styleChip)
         }
+        
+        optionsLayout.addView(chipContainer)
+        
+        // 현재 텍스트 편집 영역
+        val textEditContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 16.dp(), 0, 0)
+            }
+        }
+        
+        // "현재 텍스트" 라벨
+        val currentTextLabel = TextView(context).apply {
+            text = "현재 텍스트"
+            textSize = TEXT_SIZE_SMALL
+            setTextColor(Color.parseColor(COLOR_SECONDARY))
+            setPadding(0, 0, 0, 8.dp())
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
+            )
+        }
+        textEditContainer.addView(currentTextLabel)
+        
+        // 텍스트 편집 영역
+        val textEditArea = TextView(context).apply {
+            text = currentText.ifEmpty { "텍스트를 입력해주세요" }
+            textSize = TEXT_SIZE_BUTTON
+            setTextColor(Color.parseColor(COLOR_DARK_GRAY))
+            setPadding(12.dp(), 12.dp(), 12.dp(), 12.dp())
+            background = roundedBg(Color.parseColor(COLOR_LIGHT_GRAY), 8f)
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
+            ).apply {
+                height = 80.dp()
+            }
+            gravity = android.view.Gravity.TOP or android.view.Gravity.START
+        }
+        textEditContainer.addView(textEditArea)
+        
+        optionsLayout.addView(textEditContainer)
         
         return optionsLayout
     }
     
     /**
-     * 문체별 버튼 생성
+     * 문체별 칩 생성 (가로 배치용)
      */
-    private fun createStyleButton(
+    private fun createStyleChip(
         styleName: String, 
         exampleText: String, 
         onClick: () -> Unit
     ): Button {
         return Button(context).apply {
-            text = "$styleName\n$exampleText"
+            text = styleName
             layoutParams = LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT,
                 LayoutParams.WRAP_CONTENT
             ).apply {
-                height = BUTTON_HEIGHT_DP.dp()
-                setMargins(0, BUTTON_MARGIN_DP, 0, BUTTON_MARGIN_DP)
+                height = 32.dp()
+                setMargins(4.dp(), 0, 4.dp(), 0)
             }
             setOnClickListener { onClick() }
-            setPadding(BUTTON_PADDING_HORIZONTAL_DP.dp(), BUTTON_PADDING_VERTICAL_DP.dp(), 
-                      BUTTON_PADDING_HORIZONTAL_DP.dp(), BUTTON_PADDING_VERTICAL_DP.dp())
-            textSize = TEXT_SIZE_BUTTON
-            background = roundedBg(Color.parseColor(COLOR_LIGHT_GRAY), BUTTON_CORNER_RADIUS_DP)
+            setPadding(12.dp(), 6.dp(), 12.dp(), 6.dp())
+            textSize = TEXT_SIZE_SMALL
+            background = roundedBg(Color.parseColor(COLOR_LIGHT_GRAY), 16f)
             setTextColor(Color.parseColor(COLOR_DARK_GRAY))
             elevation = BUTTON_ELEVATION_DP.dp().toFloat()
             gravity = android.view.Gravity.CENTER

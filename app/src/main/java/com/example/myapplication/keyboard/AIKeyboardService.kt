@@ -183,7 +183,8 @@ class AIKeyboardService : InputMethodService() {
         val featureButtons = aiFeatureOverlay.createAIFeatureButtons(
             onRewritingClick = { showRewritingOptions() },
             onSpellCheckClick = { showSpellCheckResult() },
-            onScheduleAddClick = { showScheduleAddUI() }
+            onScheduleAddClick = { showScheduleAddUI() },
+            onBackToKeyboardClick = { aiFeatureOverlay.hideOverlay() }
         )
         rootLayout.addView(featureButtons)
     }

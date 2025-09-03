@@ -51,12 +51,14 @@ class AIFeatureOverlay(private val context: Context) {
     fun createAIFeatureButtons(
         onRewritingClick: () -> Unit,
         onSpellCheckClick: () -> Unit,
-        onScheduleAddClick: () -> Unit
+        onScheduleAddClick: () -> Unit,
+        onBackToKeyboardClick: () -> Unit
     ): LinearLayout {
         return aiFeatureManager.createAIFeatureButtons(
             onRewritingClick = onRewritingClick,
             onSpellCheckClick = onSpellCheckClick,
-            onScheduleAddClick = onScheduleAddClick
+            onScheduleAddClick = onScheduleAddClick,
+            onBackToKeyboardClick = onBackToKeyboardClick
         )
     }
     
@@ -94,88 +96,11 @@ class AIFeatureOverlay(private val context: Context) {
         val target = container ?: return
         target.removeAllViews()
 
-        // 헤더 + 콘텐츠를 수직으로 담을 래퍼 레이아웃
-        val wrapper = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-            setBackgroundColor(Color.parseColor("#FFFFFF"))
-        }
-
-        val headerLayout = createHeaderLayout()
-        wrapper.addView(headerLayout)
-        wrapper.addView(contentView)
-
-        target.addView(wrapper)
+        // 콘텐츠만 직접 컨테이너에 추가 (헤더 없음)
+        target.addView(contentView)
     }
     
-    /**
-     * 헤더 레이아웃 생성 (닫기 버튼 포함)
-     */
-    private fun createHeaderLayout(): LinearLayout {
-        val headerLayout = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            layoutParams = LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                LayoutParams.WRAP_CONTENT
-            )
-            setPadding(16, 8, 16, 8)
-            setBackgroundColor(Color.parseColor("#F5F5F5"))
-        }
-        // 키보드로 돌아가기 버튼
-        val backToKeyboardButton = android.widget.Button(context).apply {
-            text = "키보드로 돌아가기"
-            layoutParams = LayoutParams(
-                LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT
-            )
-            setOnClickListener { hideOverlay() }
-            setPadding(12, 8, 12, 8)
-            textSize = 14f
-            setTextColor(Color.parseColor("#424242"))
-            background = android.graphics.drawable.GradientDrawable().apply {
-                cornerRadius = 16f
-                setColor(Color.parseColor("#E0E0E0"))
-            }
-        }
-        headerLayout.addView(backToKeyboardButton)
-
-        // 제목
-        val titleText = android.widget.TextView(context).apply {
-            text = "AI 기능"
-            textSize = 16f
-            setTextColor(Color.parseColor("#424242"))
-            layoutParams = LayoutParams(
-                0,
-                LayoutParams.WRAP_CONTENT,
-                1f
-            )
-        }
-        headerLayout.addView(titleText)
-        
-        // 닫기 버튼
-        val closeButton = android.widget.Button(context).apply {
-            text = "✕"
-            layoutParams = LayoutParams(
-                LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT
-            )
-            setOnClickListener { hideOverlay() }
-            setPadding(8, 8, 8, 8)
-            textSize = 14f
-            setTextColor(Color.parseColor("#666666"))
-            background = android.graphics.drawable.GradientDrawable().apply {
-                cornerRadius = 16f
-                setColor(Color.parseColor("#E0E0E0"))
-            }
-        }
-        headerLayout.addView(closeButton)
-        
-        return headerLayout
-    }
-    
+   
     /**
      * 오버레이 숨기기
      */

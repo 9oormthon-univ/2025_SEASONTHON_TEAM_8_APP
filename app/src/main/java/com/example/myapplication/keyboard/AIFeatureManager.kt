@@ -25,8 +25,8 @@ class AIFeatureManager(private val context: Context) {
         
         // 크기
         private const val BUTTON_HEIGHT_DP = 48
-        private const val BUTTON_PADDING_HORIZONTAL_DP = 4
-        private const val BUTTON_PADDING_VERTICAL_DP = 12
+        private const val BUTTON_PADDING_HORIZONTAL_DP = 2
+        private const val BUTTON_PADDING_VERTICAL_DP = 8
         private const val BUTTON_MARGIN_DP = 2
         private const val BUTTON_CORNER_RADIUS_DP = 8f
         private const val BUTTON_ELEVATION_DP = 2f
@@ -56,20 +56,26 @@ class AIFeatureManager(private val context: Context) {
     fun createAIFeatureButtons(
         onRewritingClick: () -> Unit,
         onSpellCheckClick: () -> Unit,
-        onScheduleAddClick: () -> Unit
+        onScheduleAddClick: () -> Unit,
+        onBackToKeyboardClick: () -> Unit
     ): LinearLayout {
         val featureLayout = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, 0, 0, 8)
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
+                LayoutParams.WRAP_CONTENT
             )
         }
+        // 키보드로 돌아가기 버튼 (아이콘)
+        val backToKeyboardButton = createIconButton("⌨", onBackToKeyboardClick)
+        featureLayout.addView(backToKeyboardButton)
         
         // 리라이팅 버튼
         val rewritingButton = createFeatureButton("리라이팅", onRewritingClick)
         featureLayout.addView(rewritingButton)
+        
+        
         
         // 맞춤법 버튼
         val spellCheckButton = createFeatureButton("맞춤법", onSpellCheckClick)
@@ -96,6 +102,29 @@ class AIFeatureManager(private val context: Context) {
             setPadding(BUTTON_PADDING_HORIZONTAL_DP, BUTTON_PADDING_VERTICAL_DP, 
                       BUTTON_PADDING_HORIZONTAL_DP, BUTTON_PADDING_VERTICAL_DP)
             this.textSize = TEXT_SIZE_SMALL
+            background = roundedBg(Color.parseColor(COLOR_LIGHT_GRAY), BUTTON_CORNER_RADIUS_DP)
+            setTextColor(Color.parseColor(COLOR_DARK_GRAY))
+            elevation = BUTTON_ELEVATION_DP
+        }
+    }
+    
+    /**
+     * 아이콘 버튼 생성 (키보드로 돌아가기용)
+     */
+    private fun createIconButton(icon: String, onClick: () -> Unit): Button {
+        return Button(context).apply {
+            this.text = icon
+            layoutParams = LayoutParams(
+                LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT
+            ).apply {
+                height = BUTTON_HEIGHT_DP.dp()
+                width = BUTTON_HEIGHT_DP.dp() // 정사각형 버튼
+                setMargins(BUTTON_MARGIN_DP, BUTTON_MARGIN_DP, BUTTON_MARGIN_DP, BUTTON_MARGIN_DP)
+            }
+            setOnClickListener { onClick() }
+            setPadding(0, 0, 0, 0) // 아이콘은 패딩 없이
+            this.textSize = 18f // 아이콘 크기
             background = roundedBg(Color.parseColor(COLOR_LIGHT_GRAY), BUTTON_CORNER_RADIUS_DP)
             setTextColor(Color.parseColor(COLOR_DARK_GRAY))
             elevation = BUTTON_ELEVATION_DP

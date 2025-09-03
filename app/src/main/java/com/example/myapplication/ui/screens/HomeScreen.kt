@@ -56,7 +56,7 @@ fun HomeScreen() {
         
         // 앱 설명 (간단한 소개)
         Text(
-            text = "이곳은 메인화면",
+            text = "이곳은 메인화면!",
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 32.dp)
