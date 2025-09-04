@@ -14,6 +14,7 @@
  */
 package com.example.myapplication.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -23,6 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import com.example.myapplication.ui.components.AppDrawer
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.shadow
+import com.example.myapplication.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,11 +47,18 @@ fun MainScreen() {
     // 온보딩 완료 상태
     var isOnboardingCompleted by remember { mutableStateOf(false) }
     
-    // 온보딩 화면에서는 드로어 없이 풀스크린
+    // 온보딩과 웰컴 화면에서는 드로어 없이 풀스크린
     if (selectedScreen == "onboarding") {
         // 온보딩 화면만 표시
         OnboardingScreen(
             onGetStarted = { 
+                selectedScreen = "welcome"
+            }
+        )
+    } else if (selectedScreen == "welcome") {
+        // 웰컴 화면만 표시
+        WelcomScreen(
+            onGetStarted = {
                 selectedScreen = "home"
                 isOnboardingCompleted = true
             }
@@ -65,15 +80,40 @@ fun MainScreen() {
         Scaffold(
             topBar = {
                 // 상단 앱바
-                TopAppBar(
-                    title = { Text("코멘토") },
-                    navigationIcon = {
-                        // 햄버거 메뉴 버튼 (드로어 열기)
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "메뉴")
-                        }
-                    }
-                )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(
+                            elevation = 8.dp,
+                            spotColor = Color.White.copy(alpha = 0.3f)
+                        ),
+                    shape = RoundedCornerShape(bottomStart = 0.dp, bottomEnd = 0.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Black
+                    )
+                ) {
+                    TopAppBar(
+                        title = { 
+                            Image(
+                                painter = painterResource(id = R.drawable.logo_textmate),
+                                contentDescription = "TextMate 로고",
+                                modifier = Modifier.height(28.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        },
+                        navigationIcon = {
+                            // 햄버거 메뉴 버튼 (드로어 열기)
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Default.Menu, contentDescription = "메뉴", tint = Color.White)
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = Color.White,
+                            navigationIconContentColor = Color.White
+                        )
+                    )
+                }
             }
         ) { paddingValues ->
             // 콘텐츠 영역 (상단 앱바의 패딩 고려)

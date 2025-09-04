@@ -34,25 +34,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
+import com.example.myapplication.ui.theme.BackgroundColor
 
 @Composable
 fun OnboardingScreen(
     onGetStarted: () -> Unit = {}
 ) {
-    // 어두운 그라데이션 배경 (TextMate 스타일)
-    val gradient = Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFF1A1A1A),  // 어두운 회색
-            Color(0xFF0D1B2A),  // 진한 네이비
-            Color(0xFF415A77)   // 청회색
-        )
-    )
-    
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(gradient)
+            .background(BackgroundColor)
     ) {
+        // 배경 이미지
+        Image(
+            painter = painterResource(id = R.drawable.background_onboarding),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -72,7 +71,7 @@ fun OnboardingScreen(
             ) {
                 // TextMate 로고
                 Image(
-                    painter = painterResource(id = R.drawable.textmate_logo),
+                    painter = painterResource(id = R.drawable.logo_textmate),
                     contentDescription = "TextMate 로고",
                     modifier = Modifier
                         .size(270.dp)
@@ -93,13 +92,13 @@ fun OnboardingScreen(
                         .fillMaxWidth(0.8f)
                         .height(56.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1F1F1F),
+                        containerColor = Color.Black.copy(alpha = 0.8f),
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(28.dp),
                     border = androidx.compose.foundation.BorderStroke(
                         1.dp, 
-                        Color.White.copy(alpha = 0.2f)
+                        Color.White.copy(alpha = 0.3f)
                     )
                 ) {
                     Row(
@@ -108,7 +107,7 @@ fun OnboardingScreen(
                     ) {
                         // 구글 로고 (작게)
                         Image(
-                            painter = painterResource(id = R.drawable.google_logo),
+                            painter = painterResource(id = R.drawable.logo_google),
                             contentDescription = "Google 로고",
                             modifier = Modifier
                                 .size(20.dp)
@@ -130,7 +129,7 @@ fun OnboardingScreen(
                 ) {
                     Text(
                         text = "Log in",
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = Color.White.copy(alpha = 0.9f),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
