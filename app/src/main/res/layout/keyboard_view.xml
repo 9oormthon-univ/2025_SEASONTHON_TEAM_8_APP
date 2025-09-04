@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@color/keyboardBackground">
+    
+    <!-- AI 기능 버튼 영역 -->
+    <FrameLayout
+            android:id="@+id/ai_buttons_frame"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#F8FAFC"
+            android:padding="12dp"
+            android:elevation="2dp">
+    </FrameLayout>
+    
+    <!-- 키보드 영역 -->
+    <FrameLayout
+            android:id="@+id/keyboard_frame"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp">
+
+    </FrameLayout>
+
+</LinearLayout>

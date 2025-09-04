@@ -7,4 +7,14 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- RPG 키보드용 색상 - 현대적 디자인 -->
+    <color name="keyboardBackground">#FFF8F9FA</color>
+    <color name="keyboardBoarder">#FFE9ECEF</color>
+    <color name="keyboardDivider">#FFDEE2E6</color>
+    <color name="keyboardPressed">#FF6C757D</color>
+    <color name="keyboardText">#FF212529</color>
+    <color name="keyboardAccent">#FF0D6EFD</color>
+    <color name="keyboardAccentPressed">#FF0B5ED7</color>
+    <color name="setting_header_background">#FFFFFFFF</color>
 </resources>
