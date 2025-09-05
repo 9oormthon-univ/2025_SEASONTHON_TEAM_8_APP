@@ -1,4 +1,4 @@
-package com.example.myapplication.keyboard
+package com.example.myapplication.rpgkeyboard
 
 import android.content.Context
 import android.view.View
@@ -51,14 +51,12 @@ class AIFeatureOverlay(private val context: Context) {
     fun createAIFeatureButtons(
         onRewritingClick: () -> Unit,
         onSpellCheckClick: () -> Unit,
-        onScheduleAddClick: () -> Unit,
-        onBackToKeyboardClick: () -> Unit
+        onScheduleAddClick: () -> Unit
     ): LinearLayout {
         return aiFeatureManager.createAIFeatureButtons(
             onRewritingClick = onRewritingClick,
             onSpellCheckClick = onSpellCheckClick,
-            onScheduleAddClick = onScheduleAddClick,
-            onBackToKeyboardClick = onBackToKeyboardClick
+            onScheduleAddClick = onScheduleAddClick
         )
     }
     

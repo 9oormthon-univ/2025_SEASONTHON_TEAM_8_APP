@@ -28,10 +28,25 @@
             </intent-filter>
         </activity>
 
-        <!-- 키보드 서비스 -->
+        <!-- AI 키보드 서비스 -->
         <service
             android:name=".keyboard.AIKeyboardService"
             android:label="@string/ai_keyboard_name"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true"
+            android:directBootAware="false">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
+
+        <!-- RPG 키보드 서비스 -->
+        <service
+            android:name=".rpgkeyboard.KeyBoardService"
+            android:label="@string/rpg_keyboard_name"
             android:permission="android.permission.BIND_INPUT_METHOD"
             android:exported="true"
             android:directBootAware="false">

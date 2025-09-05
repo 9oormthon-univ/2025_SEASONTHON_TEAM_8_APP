@@ -59,13 +59,31 @@ fun HomeScreen(
             .fillMaxSize()
             .background(BackgroundColor)
     ) {
-        // 배경 이미지 (OnboardingScreen과 같은 배경)
-        // Image(
-        //     painter = painterResource(id = R.drawable.background_onboarding),
-        //     contentDescription = null,
-        //     modifier = Modifier.fillMaxSize(),
-        //     contentScale = ContentScale.Crop
-        // )
+        // 앱 아이콘 또는 로고 (이모지 사용)
+        Text(
+            text = "⌨️",
+            fontSize = 64.sp,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        
+        // 앱 제목 (브랜드명)
+        Text(
+            text = "코멘토",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        // 앱 설명 (간단한 소개)
+        Text(
+            text = "이곳은 메인화면!",
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+        
+       
+
         
         Column(
             modifier = Modifier.fillMaxSize()

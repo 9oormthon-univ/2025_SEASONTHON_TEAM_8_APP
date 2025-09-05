@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 눌린 상태 그림자 (다크) -->
+    <item android:top="1dp" android:left="1dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="8dp"/>
+            <solid android:color="#22000000"/>
+        </shape>
+    </item>
+    <!-- 눌린 상태 배경 (이미지 기준) -->
+    <item android:bottom="1dp" android:right="1dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="8dp"/>
+            <solid android:color="#FF404040"/>
+            <stroke android:width="1dp" android:color="@color/keyboardPressed"/>
+        </shape>
+    </item>
+</layer-list>

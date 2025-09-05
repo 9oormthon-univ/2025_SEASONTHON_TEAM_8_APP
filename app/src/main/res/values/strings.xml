@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">AI Keyboard</string>
     <string name="ai_keyboard_name">AI 자동완성 키보드</string>
+    <string name="rpg_keyboard_name">RPG 키보드</string>
     <string name="keyboard_settings">키보드 설정</string>
     <string name="enable_keyboard">키보드 활성화</string>
     <string name="keyboard_enabled">키보드가 활성화되었습니다!</string>
