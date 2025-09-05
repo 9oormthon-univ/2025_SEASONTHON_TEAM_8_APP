@@ -87,8 +87,7 @@ class KeyBoardService : InputMethodService(){
             val aiButtons = aiFeatureOverlay.createAIFeatureButtons(
                 onRewritingClick = { showRewritingOptions() },
                 onSpellCheckClick = { showSpellCheckResult() },
-                onScheduleAddClick = { showScheduleAddUI() },
-                onBackToKeyboardClick = { aiFeatureOverlay.hideOverlay() }
+                onScheduleAddClick = { showScheduleAddUI() }
             )
             aiButtonsFrame.addView(aiButtons)
             
@@ -116,8 +115,7 @@ class KeyBoardService : InputMethodService(){
         val aiButtons = aiFeatureOverlay.createAIFeatureButtons(
             onRewritingClick = { showRewritingOptions() },
             onSpellCheckClick = { showSpellCheckResult() },
-            onScheduleAddClick = { showScheduleAddUI() },
-            onBackToKeyboardClick = { aiFeatureOverlay.hideOverlay() }
+            onScheduleAddClick = { showScheduleAddUI() }
         )
         aiButtonsFrame.addView(aiButtons)
         

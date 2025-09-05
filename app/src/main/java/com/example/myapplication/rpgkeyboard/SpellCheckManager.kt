@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.Button
 import android.widget.TextView
+import android.widget.ScrollView
 import android.graphics.Color
 import android.view.ViewGroup
 import android.widget.LinearLayout.LayoutParams
@@ -20,15 +21,15 @@ import android.view.inputmethod.InputConnection
 class SpellCheckManager(private val context: Context) {
     
     companion object {
-        // 무채색 색상 팔레트
-        private const val COLOR_PRIMARY = "#424242"      // 진한 회색
-        private const val COLOR_SECONDARY = "#757575"    // 중간 회색
-        private const val COLOR_LIGHT_GRAY = "#EEEEEE"   // 연한 회색
-        private const val COLOR_DARK_GRAY = "#212121"    // 매우 진한 회색
-        private const val COLOR_WHITE = "#FFFFFF"        // 흰색
-        private const val COLOR_BLACK = "#000000"        // 검은색
-        private const val COLOR_ACCENT = "#757575"       // 강조색 (중간 회색)
-        private const val COLOR_ERROR_BG = "#F5F5F5"     // 오류 배경색 (연한 회색)
+        // AOS 다크 테마 색상 팔레트
+        private const val COLOR_PRIMARY = "#FF2A2A2A"      // AOS/Dark/Primary
+        private const val COLOR_SECONDARY = "#FF424242"    // 중간 회색
+        private const val COLOR_LIGHT_GRAY = "#FFE0E0E0"   // AOS/Dark/On Primary
+        private const val COLOR_DARK_GRAY = "#FF000000"    // AOS/Dark/Secondary
+        private const val COLOR_WHITE = "#FFE0E0E0"        // 밝은 회색
+        private const val COLOR_BLACK = "#FF000000"        // 검은색
+        private const val COLOR_ACCENT = "#FF4CAF50"       // 강조색 (에메랄드)
+        private const val COLOR_ERROR_BG = "#FF1A1A1A"     // 오류 배경색 (어두운 회색)
         
         // 키보드 크기에 맞춘 크기 상수
         private const val SCREEN_HEIGHT_DP = 280         // 키보드 높이
@@ -66,7 +67,15 @@ class SpellCheckManager(private val context: Context) {
         }
     
     /**
-     * 맞춤법 검사 결과 UI를 생성
+     * 그라데이션 배경을 생성하는 함수
+     */
+    private fun gradientBg(startColor: Int, endColor: Int, radiusDp: Float = 12f): GradientDrawable =
+        GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(startColor, endColor)).apply {
+            cornerRadius = radiusDp.dp().toFloat()
+        }
+    
+    /**
+     * 맞춤법 검사 결과 UI를 생성 (사진 스타일)
      */
     fun createSpellCheckResult(
         inputConnection: InputConnection?,
@@ -74,58 +83,90 @@ class SpellCheckManager(private val context: Context) {
     ): LinearLayout {
         val resultLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(CARD_PADDING_DP.dp(), CARD_PADDING_DP.dp(), CARD_PADDING_DP.dp(), CARD_PADDING_DP.dp())
+            setPadding(16.dp(), 16.dp(), 16.dp(), 0.dp())
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                SCREEN_HEIGHT_DP.dp()
+                ViewGroup.LayoutParams.MATCH_PARENT
             )
-            setBackgroundColor(Color.parseColor(COLOR_WHITE))
+            setBackgroundColor(Color.BLACK) // 검은색 배경
         }
         
-        // 제목
-        val titleText = TextView(context).apply {
-            text = "맞춤법 검사"
-            textSize = TEXT_SIZE_TITLE
-            setTextColor(Color.parseColor(COLOR_DARK_GRAY))
-            setPadding(0, 0, 0, TITLE_MARGIN_BOTTOM_DP.dp())
-            setTypeface(null, android.graphics.Typeface.BOLD)
-            gravity = android.view.Gravity.CENTER
+        // 말풍선 (다크 그레이 배경, 흰색 텍스트) - 스크롤 가능
+        val speechBubble = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(20.dp(), 16.dp(), 20.dp(), 16.dp())
+            background = roundedBg(Color.parseColor("#FF424242"), 12f) // 다크 그레이
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                140.dp() // 통일된 높이
+            ).apply {
+                setMargins(0, 0, 0, 8.dp())
+            }
+        }
+        
+        // 스크롤뷰로 감싸기
+        val scrollView = ScrollView(context).apply {
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            isVerticalScrollBarEnabled = true
+            scrollBarStyle = View.SCROLLBARS_INSIDE_OVERLAY
+        }
+        
+        // 말풍선 텍스트 (맞춤법 수정된 ai 답변 반복)
+        val bubbleText = TextView(context).apply {
+            text = "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변"
+            textSize = 12f
+            setTextColor(Color.WHITE) // 흰색 텍스트
+            setTypeface(null, android.graphics.Typeface.NORMAL)
+            lineHeight = 18.dp()
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 LayoutParams.WRAP_CONTENT
             )
         }
-        resultLayout.addView(titleText)
         
-        // 더미 맞춤법 오류들 (실제로는 AI로 검사)
-        val spellErrors = getSpellErrors(currentText)
+        scrollView.addView(bubbleText)
+        speechBubble.addView(scrollView)
+        resultLayout.addView(speechBubble)
         
-        if (spellErrors.isEmpty()) {
-            // 오류가 없는 경우
-            val noErrorText = TextView(context).apply {
-                text = "✅ 맞춤법 오류 없음"
-                textSize = TEXT_SIZE_ERROR
-                setTextColor(Color.parseColor(COLOR_ACCENT))
-                setPadding(0, 0, 0, ERROR_MARGIN_DP.dp())
-                gravity = android.view.Gravity.CENTER
-                setTypeface(null, android.graphics.Typeface.BOLD)
+        // 체크마크 아이콘만 (가운데 정렬)
+        val checkmarkContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 20.dp(), 0, 20.dp())
             }
-            resultLayout.addView(noErrorText)
-        } else {
-            // 오류가 있는 경우 (키보드 크기에 맞춰 줄임)
-            spellErrors.take(2).forEach { error ->
-                val errorLayout = createErrorItem(error, inputConnection)
-                resultLayout.addView(errorLayout)
-            }
+            gravity = android.view.Gravity.CENTER
         }
         
-        // 확인 버튼
-        val confirmButton = createConfirmButton {
-            // 수정된 텍스트 적용
-            val correctedText = getCorrectedText(currentText, spellErrors)
-            inputConnection?.commitText(correctedText, 1)
+        val checkmarkIcon = TextView(context).apply {
+            text = "✓"
+            textSize = 18f
+            setTextColor(Color.WHITE)
+            setPadding(12.dp(), 12.dp(), 12.dp(), 12.dp())
+            background = gradientBg(
+                Color.parseColor("#FF34C2E8"), // 파란색
+                Color.parseColor("#FF5AA0E6"), // 더 진한 파란색
+                25f // 더 둥근 모서리
+            )
+            gravity = android.view.Gravity.CENTER
+            elevation = 4f
+            layoutParams = LayoutParams(40.dp(), 40.dp())
         }
-        resultLayout.addView(confirmButton)
+        
+        checkmarkContainer.addView(checkmarkIcon)
+        resultLayout.addView(checkmarkContainer)
         
         return resultLayout
     }

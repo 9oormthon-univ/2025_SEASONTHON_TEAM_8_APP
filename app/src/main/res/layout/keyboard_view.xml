@@ -10,7 +10,7 @@
             android:id="@+id/ai_buttons_frame"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#F8FAFC"
+            android:background="#000000"
             android:padding="12dp"
             android:elevation="2dp">
     </FrameLayout>

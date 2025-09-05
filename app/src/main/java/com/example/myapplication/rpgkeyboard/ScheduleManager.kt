@@ -6,6 +6,8 @@ import android.widget.LinearLayout
 import android.widget.Button
 import android.widget.TextView
 import android.widget.EditText
+import android.widget.DatePicker
+import android.widget.TimePicker
 import android.graphics.Color
 import android.view.ViewGroup
 import android.widget.LinearLayout.LayoutParams
@@ -13,6 +15,7 @@ import android.graphics.drawable.GradientDrawable
 import android.view.inputmethod.InputConnection
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Calendar
 
 /**
  * 일정 추가 UI 생성 및 더미 추출/등록 처리
@@ -24,14 +27,14 @@ import java.time.format.DateTimeFormatter
 class ScheduleManager(private val context: Context) {
     
     companion object {
-        // 무채색 색상 팔레트
-        private const val COLOR_PRIMARY = "#424242"      // 진한 회색
-        private const val COLOR_SECONDARY = "#757575"    // 중간 회색
-        private const val COLOR_LIGHT_GRAY = "#EEEEEE"   // 연한 회색
-        private const val COLOR_DARK_GRAY = "#212121"    // 매우 진한 회색
-        private const val COLOR_WHITE = "#FFFFFF"        // 흰색
-        private const val COLOR_BLACK = "#000000"        // 검은색
-        private const val COLOR_ACCENT = "#757575"       // 강조색 (중간 회색)
+        // AOS 다크 테마 색상 팔레트
+        private const val COLOR_PRIMARY = "#FF2A2A2A"      // AOS/Dark/Primary
+        private const val COLOR_SECONDARY = "#FF424242"    // 중간 회색
+        private const val COLOR_LIGHT_GRAY = "#FFE0E0E0"   // AOS/Dark/On Primary
+        private const val COLOR_DARK_GRAY = "#FF000000"    // AOS/Dark/Secondary
+        private const val COLOR_WHITE = "#FFE0E0E0"        // 밝은 회색
+        private const val COLOR_BLACK = "#FF000000"        // 검은색
+        private const val COLOR_ACCENT = "#FF4CAF50"       // 강조색 (에메랄드)
         
         // 키보드 크기에 맞춘 크기 상수
         private const val SCREEN_HEIGHT_DP = 280         // 키보드 높이
@@ -69,28 +72,40 @@ class ScheduleManager(private val context: Context) {
         }
     
     /**
-     * 일정 추가 UI를 생성
+     * 일정 추가 UI를 생성 (사진 스타일)
      */
     fun createScheduleAddUI(
         inputConnection: InputConnection?,
         currentText: String
     ): LinearLayout {
-        val scheduleLayout = LinearLayout(context).apply {
+        // 전체 컨테이너 (검은 배경 + 양쪽 패딩)
+        val outerContainer = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(CARD_PADDING_DP.dp(), CARD_PADDING_DP.dp(), CARD_PADDING_DP.dp(), CARD_PADDING_DP.dp())
+            setPadding(16.dp(), 16.dp(), 16.dp(), 16.dp()) // 양쪽 검은 패딩
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                SCREEN_HEIGHT_DP.dp()
+                ViewGroup.LayoutParams.MATCH_PARENT
             )
-            setBackgroundColor(Color.parseColor(COLOR_WHITE))
+            setBackgroundColor(Color.BLACK) // 검은 배경
+        }
+        
+        // 내부 컨테이너 (다크 그레이)
+        val scheduleLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(20.dp(), 20.dp(), 20.dp(), 20.dp())
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            background = roundedBg(Color.parseColor("#FF333333"), 16f) // 다크 그레이, 둥근 모서리
         }
         
         // 제목
         val titleText = TextView(context).apply {
             text = "일정 추가"
-            textSize = TEXT_SIZE_TITLE
-            setTextColor(Color.parseColor(COLOR_DARK_GRAY))
-            setPadding(0, 0, 0, TITLE_MARGIN_BOTTOM_DP.dp())
+            textSize = 16f
+            setTextColor(Color.WHITE)
+            setPadding(0, 0, 0, 20.dp())
             setTypeface(null, android.graphics.Typeface.BOLD)
             gravity = android.view.Gravity.CENTER
             layoutParams = LayoutParams(
@@ -103,27 +118,187 @@ class ScheduleManager(private val context: Context) {
         // 추출된 일정 정보 표시
         val extractedSchedule = extractScheduleInfo(currentText)
         
-        // 장소 입력
-        val locationLayout = createInputField("장소", extractedSchedule.location)
-        scheduleLayout.addView(locationLayout)
+        // 메인 컨테이너 (좌우 분할)
+        val mainContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 20.dp())
+            }
+        }
         
-        // 날짜 입력
-        val dateLayout = createInputField("날짜", extractedSchedule.date)
-        scheduleLayout.addView(dateLayout)
+        // 왼쪽: 입력 필드들
+        val leftContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LayoutParams(
+                0,
+                LayoutParams.WRAP_CONTENT,
+                1f
+            ).apply {
+                setMargins(0, 0, 10.dp(), 0)
+            }
+        }
+        
+        // 장소 입력
+        val locationLayout = createScheduleInputField("장소", extractedSchedule.location)
+        leftContainer.addView(locationLayout)
+        
+        // 날짜 입력 (DatePicker)
+        val dateLayout = createScheduleInputField("날짜", "9월 5일")
+        leftContainer.addView(dateLayout)
+        
+        // 시간 입력 (TimePicker)
+        val timeLayout = createScheduleInputField("시간", "오후 11시")
+        leftContainer.addView(timeLayout)
+        
+        // 오른쪽: 메모 입력
+        val memoContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LayoutParams(
+                0,
+                LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        }
+        
+        val memoField = EditText(context).apply {
+            hint = "추가메모 입력 창"
+            textSize = 12f
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.parseColor("#FF888888"))
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                140.dp() // 통일된 높이
+            )
+            setPadding(12.dp(), 12.dp(), 12.dp(), 12.dp())
+            background = roundedBg(Color.parseColor("#FF2A2A2A"), 8f)
+            setTypeface(null, android.graphics.Typeface.NORMAL)
+            gravity = android.view.Gravity.TOP or android.view.Gravity.START
+        }
+        memoContainer.addView(memoField)
+        
+        mainContainer.addView(leftContainer)
+        mainContainer.addView(memoContainer)
+        scheduleLayout.addView(mainContainer)
         
         // 일정 등록 버튼
-        val addButton = createAddButton {
+        val addButton = createScheduleAddButton {
             // 더미 데이터로 일정 등록 완료 메시지
             val successMessage = "✅ 일정 등록됨: ${extractedSchedule.location} ${extractedSchedule.date}"
             inputConnection?.commitText(successMessage, 1)
         }
         scheduleLayout.addView(addButton)
         
-        return scheduleLayout
+        // outerContainer에 scheduleLayout 추가
+        outerContainer.addView(scheduleLayout)
+        
+        return outerContainer
     }
     
     /**
-     * 입력 필드 생성
+     * 일정 입력 필드 생성 (사진 스타일)
+     */
+    private fun createScheduleInputField(label: String, defaultValue: String): LinearLayout {
+        val fieldLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 6.dp(), 0, 6.dp())
+            }
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            setPadding(12.dp(), 10.dp(), 12.dp(), 10.dp())
+            background = roundedBg(Color.parseColor("#FF2A2A2A"), 8f)
+        }
+        
+        // 라벨 (연한 파란색)
+        val labelText = TextView(context).apply {
+            text = label
+            textSize = 12f
+            setTextColor(Color.parseColor("#FF87CEEB")) // 연한 파란색
+            layoutParams = LayoutParams(
+                LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT
+            )
+            setTypeface(null, android.graphics.Typeface.NORMAL)
+        }
+        fieldLayout.addView(labelText)
+        
+        // 값 (흰색, 오른쪽 정렬)
+        val valueText = TextView(context).apply {
+            text = defaultValue
+            textSize = 12f
+            setTextColor(Color.WHITE)
+            layoutParams = LayoutParams(
+                0,
+                LayoutParams.WRAP_CONTENT,
+                1f
+            )
+            gravity = android.view.Gravity.END or android.view.Gravity.CENTER_VERTICAL
+            setTypeface(null, android.graphics.Typeface.NORMAL)
+        }
+        fieldLayout.addView(valueText)
+        
+        // 클릭 이벤트 (날짜/시간 필드에만)
+        if (label == "날짜" || label == "시간") {
+            fieldLayout.setOnClickListener {
+                if (label == "날짜") {
+                    showDatePicker(valueText)
+                } else if (label == "시간") {
+                    showTimePicker(valueText)
+                }
+            }
+        }
+        
+        return fieldLayout
+    }
+    
+    /**
+     * DatePicker 표시
+     */
+    private fun showDatePicker(textView: TextView) {
+        val calendar = Calendar.getInstance()
+        val datePicker = DatePicker(context)
+        datePicker.init(
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ) { _, year, month, day ->
+            val selectedDate = "${month + 1}월 ${day}일"
+            textView.text = selectedDate
+        }
+        
+        // 실제로는 Dialog나 PopupWindow로 표시해야 함
+        // 여기서는 간단히 텍스트만 변경
+        val calendar2 = Calendar.getInstance()
+        val month = calendar2.get(Calendar.MONTH) + 1
+        val day = calendar2.get(Calendar.DAY_OF_MONTH)
+        textView.text = "${month}월 ${day}일"
+    }
+    
+    /**
+     * TimePicker 표시
+     */
+    private fun showTimePicker(textView: TextView) {
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        
+        // 실제로는 Dialog나 PopupWindow로 표시해야 함
+        // 여기서는 간단히 텍스트만 변경
+        val timeString = if (hour >= 12) {
+            "오후 ${if (hour > 12) hour - 12 else hour}시"
+        } else {
+            "오전 ${if (hour == 0) 12 else hour}시"
+        }
+        textView.text = timeString
+    }
+    
+    /**
+     * 입력 필드 생성 (기존 함수 유지)
      */
     private fun createInputField(label: String, defaultValue: String): LinearLayout {
         val fieldLayout = LinearLayout(context).apply {
@@ -174,7 +349,30 @@ class ScheduleManager(private val context: Context) {
     }
     
     /**
-     * 일정 등록 버튼 생성
+     * 일정 등록 버튼 생성 (사진 스타일)
+     */
+    private fun createScheduleAddButton(onClick: () -> Unit): Button {
+        return Button(context).apply {
+            text = "일정 등록"
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
+            ).apply {
+                height = 40.dp()
+                setMargins(0, 0, 0, 0)
+            }
+            setOnClickListener { onClick() }
+            setPadding(16.dp(), 12.dp(), 16.dp(), 12.dp())
+            textSize = 14f
+            background = roundedBg(Color.parseColor("#FF87CEEB"), 8f) // 연한 파란색
+            setTextColor(Color.WHITE)
+            elevation = 2f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+        }
+    }
+    
+    /**
+     * 일정 등록 버튼 생성 (기존 함수 유지)
      */
     private fun createAddButton(onClick: () -> Unit): Button {
         return Button(context).apply {

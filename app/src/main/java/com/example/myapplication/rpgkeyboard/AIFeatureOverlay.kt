@@ -51,14 +51,12 @@ class AIFeatureOverlay(private val context: Context) {
     fun createAIFeatureButtons(
         onRewritingClick: () -> Unit,
         onSpellCheckClick: () -> Unit,
-        onScheduleAddClick: () -> Unit,
-        onBackToKeyboardClick: () -> Unit
+        onScheduleAddClick: () -> Unit
     ): LinearLayout {
         return aiFeatureManager.createAIFeatureButtons(
             onRewritingClick = onRewritingClick,
             onSpellCheckClick = onSpellCheckClick,
-            onScheduleAddClick = onScheduleAddClick,
-            onBackToKeyboardClick = onBackToKeyboardClick
+            onScheduleAddClick = onScheduleAddClick
         )
     }
     
