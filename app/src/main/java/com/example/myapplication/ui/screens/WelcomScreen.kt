@@ -52,7 +52,7 @@ fun WelcomScreen(
     
     // 자동 전환 효과
     LaunchedEffect(Unit) {
-        delay(3000) // 3초 대기 후 바로 전환
+        delay(2000) // 2초 대기 후 바로 전환
         onGetStarted() // 다음 화면으로 이동
     }
     

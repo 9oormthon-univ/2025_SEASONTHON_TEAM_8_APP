@@ -17,6 +17,7 @@ package com.example.myapplication.ui.screens
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -47,7 +48,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onNavigateToConversationAnalysis: () -> Unit = {}
+) {
     val context = LocalContext.current
     
     Box(
@@ -87,7 +90,7 @@ fun HomeScreen() {
                             }
                             append(" 입니다\n따뜻한 대화를 도와드릴게요")
                         },
-                        fontSize = 20.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.White,
                         textAlign = TextAlign.Start,
@@ -148,7 +151,8 @@ fun HomeScreen() {
                         Card(
                             modifier = Modifier
                                 .weight(1f)
-                                .padding(end = 8.dp),
+                                .padding(end = 8.dp)
+                                .clickable { onNavigateToConversationAnalysis() },
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = MainColor2

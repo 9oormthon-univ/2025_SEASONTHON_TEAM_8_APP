@@ -124,7 +124,12 @@ fun MainScreen() {
             ) {
                     // 선택된 화면에 따라 적절한 컴포넌트 렌더링
                     when (selectedScreen) {
-                        "home" -> HomeScreen()           // 홈 화면
+                        "home" -> HomeScreen(
+                            onNavigateToConversationAnalysis = { selectedScreen = "conversation_analysis" }
+                        )           // 홈 화면
+                        "conversation_analysis" -> ConversationAnalysisScreen(
+                            onBackClick = { selectedScreen = "home" }
+                        )    // 대화 분석 화면
                         "settings" -> SettingsScreen()   // 설정 화면
                         "keyboard_test" -> KeyboardTestScreen()  // 키보드 테스트 화면
                         "help" -> HelpScreen()           // 도움말 화면
