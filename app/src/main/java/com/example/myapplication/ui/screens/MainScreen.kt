@@ -14,6 +14,7 @@
  */
 package com.example.myapplication.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -23,6 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import com.example.myapplication.ui.components.AppDrawer
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.shadow
+import com.example.myapplication.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,33 +42,78 @@ fun MainScreen() {
     val scope = rememberCoroutineScope()
     
     // 현재 선택된 화면을 추적하는 상태 변수
-    var selectedScreen by remember { mutableStateOf("home") }
+    var selectedScreen by remember { mutableStateOf("onboarding") }
     
-    // 모달 네비게이션 드로어 구현
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            // 드로어 내용 (AppDrawer 컴포넌트 사용)
-            AppDrawer(
-                selectedScreen = selectedScreen,
-                onScreenSelected = { screen -> selectedScreen = screen },
-                onDrawerClose = { scope.launch { drawerState.close() } }
-            )
-        }
-    ) {
+    // 온보딩 완료 상태
+    var isOnboardingCompleted by remember { mutableStateOf(false) }
+    
+    // 온보딩과 웰컴 화면에서는 드로어 없이 풀스크린
+    if (selectedScreen == "onboarding") {
+        // 온보딩 화면만 표시
+        OnboardingScreen(
+            onGetStarted = { 
+                selectedScreen = "welcome"
+            }
+        )
+    } else if (selectedScreen == "welcome") {
+        // 웰컴 화면만 표시
+        WelcomScreen(
+            onGetStarted = {
+                selectedScreen = "home"
+                isOnboardingCompleted = true
+            }
+        )
+    } else {
+        // 일반 화면들 - 드로어와 함께
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                // 드로어 내용 (AppDrawer 컴포넌트 사용)
+                AppDrawer(
+                    selectedScreen = selectedScreen,
+                    onScreenSelected = { screen -> selectedScreen = screen },
+                    onDrawerClose = { scope.launch { drawerState.close() } }
+                )
+            }
+        ) {
         // 메인 콘텐츠 영역
         Scaffold(
             topBar = {
                 // 상단 앱바
-                TopAppBar(
-                    title = { Text("코멘토") },
-                    navigationIcon = {
-                        // 햄버거 메뉴 버튼 (드로어 열기)
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "메뉴")
-                        }
-                    }
-                )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(
+                            elevation = 8.dp,
+                            spotColor = Color.White.copy(alpha = 0.3f)
+                        ),
+                    shape = RoundedCornerShape(bottomStart = 0.dp, bottomEnd = 0.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Black
+                    )
+                ) {
+                    TopAppBar(
+                        title = { 
+                            Image(
+                                painter = painterResource(id = R.drawable.logo_textmate),
+                                contentDescription = "TextMate 로고",
+                                modifier = Modifier.height(28.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        },
+                        navigationIcon = {
+                            // 햄버거 메뉴 버튼 (드로어 열기)
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Default.Menu, contentDescription = "메뉴", tint = Color.White)
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = Color.White,
+                            navigationIconContentColor = Color.White
+                        )
+                    )
+                }
             }
         ) { paddingValues ->
             // 콘텐츠 영역 (상단 앱바의 패딩 고려)
@@ -69,12 +122,20 @@ fun MainScreen() {
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // 선택된 화면에 따라 적절한 컴포넌트 렌더링
-                when (selectedScreen) {
-                    "home" -> HomeScreen()           // 홈 화면
-                    "settings" -> SettingsScreen()   // 설정 화면
-                    "keyboard_test" -> KeyboardTestScreen()  // 키보드 테스트 화면
-                    "help" -> HelpScreen()           // 도움말 화면
+                    // 선택된 화면에 따라 적절한 컴포넌트 렌더링
+                    when (selectedScreen) {
+                        "home" -> HomeScreen(
+                            onNavigateToConversationAnalysis = { selectedScreen = "conversation_analysis" },
+                            onNavigateToKeyboardSettings = { selectedScreen = "keyboard_settings" }
+                        )           // 홈 화면
+                        "conversation_analysis" -> ConversationAnalysisScreen(
+                            onBackClick = { selectedScreen = "home" }
+                        )    // 대화 분석 화면
+                        "keyboard_settings" -> KeyboardSettingsScreen()  // 키보드 설정 화면
+                        "settings" -> SettingsScreen()   // 설정 화면
+                        "keyboard_test" -> KeyboardTestScreen()  // 키보드 테스트 화면
+                        "help" -> HelpScreen()           // 도움말 화면
+                    }
                 }
             }
         }

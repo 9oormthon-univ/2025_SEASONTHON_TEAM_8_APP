@@ -1,15 +1,139 @@
+# ==================== 안드로이드 공동 개발용 .gitignore ====================
+
+# ==================== 빌드 관련 ====================
 *.iml
 .gradle
 /local.properties
+/build
+/captures
+.externalNativeBuild
+.cxx
+app/build/
+*/build/
+
+# ==================== IDE 설정 (개인별로 다름) ====================
+# IntelliJ IDEA / Android Studio
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+/.idea/dictionaries
+/.idea/inspectionProfiles/
+/.idea/shelf/
+/.idea/deploymentTargetDropDown.xml
+/.idea/gradle.xml
+/.idea/misc.xml
+/.idea/compiler.xml
+/.idea/jarRepositories.xml
+/.idea/runConfigurations/
+
+# VS Code 개인 설정 (공유하지 않음)
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/extensions.json
+
+# ==================== 운영체제별 파일 ====================
+# macOS
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ==================== 개발 도구 ====================
+# Gradle Wrapper (jar는 포함, properties는 팀 공유)
+!gradle/wrapper/gradle-wrapper.jar
+gradle/wrapper/gradle-wrapper.properties
+
+# 로컬 설정 파일들
 local.properties
+keystore.properties
+*.keystore
+*.jks
+
+# ==================== 로그 및 임시 파일 ====================
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.#*
+
+# ==================== 의존성 및 캐시 ====================
+node_modules/
+.npm
+.yarn/
+.pnp.*
+
+# ==================== 보안 관련 ====================
+# API 키, 비밀키 등
+secrets.properties
+google-services.json
+*.p12
+*.pem
+*.key
+
+# ==================== 테스트 관련 ====================
+/test-results/
+/androidTest-results/
+/test-output/
+coverage/
+*.coverage
+
+# ==================== 프로파일링 및 분석 ====================
+*.hprof
+*.trace
+lint-results*.html
+lint-results*.xml
+
+# ==================== 기타 ====================
+# 백업 파일
+*.bak
+*.backup
+*.orig
+
+# 압축 파일
+*.zip
+*.tar.gz
+*.rar
+
+# 미디어 파일 (큰 용량) - mp4는 앱 리소스로 사용하므로 제외
+# *.mp4  # 주석 처리: 앱에서 사용하는 비디오 파일
+*.avi
+*.mov
+*.wmv
+*.flv
+*.webm

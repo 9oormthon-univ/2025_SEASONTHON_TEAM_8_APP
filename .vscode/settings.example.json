@@ -1,0 +1,29 @@
+{
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-21",
+            "path": "JAVA_HOME_경로를_여기에_입력하세요"
+        }
+    ],
+    "android.home": "ANDROID_SDK_경로를_여기에_입력하세요",
+    "gradle.nestedProjects": true,
+    "kotlin.languageServer.enabled": true,
+    "files.associations": {
+        "*.kts": "kotlin"
+    },
+    "terminal.integrated.env.windows": {
+        "ANDROID_HOME": "ANDROID_SDK_경로를_여기에_입력하세요",
+        "JAVA_HOME": "JAVA_HOME_경로를_여기에_입력하세요"
+    },
+    "files.exclude": {
+        "**/build": true,
+        "**/.gradle": true
+    },
+    "kotlin.formatter": "ktlint",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    }
+} 
