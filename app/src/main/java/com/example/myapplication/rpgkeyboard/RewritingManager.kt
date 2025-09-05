@@ -29,7 +29,7 @@ class RewritingManager(private val context: Context) {
         private const val COLOR_BLACK = "#000000"        // 검은색
         
         // 키보드 크기에 맞춘 크기 상수
-        private const val SCREEN_HEIGHT_DP = 200         // 키보드 높이
+        private const val SCREEN_HEIGHT_DP = 280         // 키보드 높이
         private const val BUTTON_HEIGHT_DP = 40          // 키보드에 적합한 버튼 높이
         private const val BUTTON_PADDING_HORIZONTAL_DP = 8
         private const val BUTTON_PADDING_VERTICAL_DP = 8
@@ -173,7 +173,7 @@ class RewritingManager(private val context: Context) {
      */
     private fun createStyleChip(
         styleName: String, 
-        exampleText: String, 
+        @Suppress("UNUSED_PARAMETER") exampleText: String, 
         onClick: () -> Unit
     ): Button {
         return Button(context).apply {

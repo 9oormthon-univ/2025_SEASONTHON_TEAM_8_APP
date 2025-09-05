@@ -34,7 +34,7 @@ class ScheduleManager(private val context: Context) {
         private const val COLOR_ACCENT = "#757575"       // 강조색 (중간 회색)
         
         // 키보드 크기에 맞춘 크기 상수
-        private const val SCREEN_HEIGHT_DP = 200         // 키보드 높이
+        private const val SCREEN_HEIGHT_DP = 280         // 키보드 높이
         private const val BUTTON_HEIGHT_DP = 40          // 키보드에 적합한 버튼 높이
         private const val BUTTON_PADDING_HORIZONTAL_DP = 8
         private const val BUTTON_PADDING_VERTICAL_DP = 8
@@ -200,7 +200,7 @@ class ScheduleManager(private val context: Context) {
     /**
      * 텍스트에서 일정 정보 추출 (더미 데이터)
      */
-    private fun extractScheduleInfo(text: String): ScheduleInfo {
+    private fun extractScheduleInfo(@Suppress("UNUSED_PARAMETER") text: String): ScheduleInfo {
         // 실제로는 AI로 텍스트 분석하여 일정 정보 추출
         // text 매개변수는 향후 AI 분석에 사용될 예정
         return ScheduleInfo(

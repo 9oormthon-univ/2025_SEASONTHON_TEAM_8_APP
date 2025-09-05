@@ -8,13 +8,13 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     
-    <!-- RPG 키보드용 색상 - 현대적 디자인 -->
-    <color name="keyboardBackground">#FFF8F9FA</color>
-    <color name="keyboardBoarder">#FFE9ECEF</color>
-    <color name="keyboardDivider">#FFDEE2E6</color>
-    <color name="keyboardPressed">#FF6C757D</color>
-    <color name="keyboardText">#FF212529</color>
-    <color name="keyboardAccent">#FF0D6EFD</color>
-    <color name="keyboardAccentPressed">#FF0B5ED7</color>
+    <!-- 키보드 다크 테마 색상 -->
+    <color name="keyboardBackground">#FF121212</color> <!-- 전체 배경: 거의 검정 -->
+    <color name="keyboardBoarder">#FF2A2A2A</color>    <!-- 키 테두리: 짙은 회색 -->
+    <color name="keyboardDivider">#FF1E1E1E</color>   <!-- 키 사이 구분선 -->
+    <color name="keyboardPressed">#FF3A3A3A</color>   <!-- 눌림 배경: 살짝 밝은 회색 -->
+    <color name="keyboardText">#FFECECEC</color>     <!-- 키 텍스트: 밝은 회색 -->
+    <color name="keyboardAccent">#FF4CAF50</color>   <!-- 강조색: 녹색 계열 -->
+    <color name="keyboardAccentPressed">#FF43A047</color> <!-- 강조 눌림 -->
     <color name="setting_header_background">#FFFFFFFF</color>
 </resources>
