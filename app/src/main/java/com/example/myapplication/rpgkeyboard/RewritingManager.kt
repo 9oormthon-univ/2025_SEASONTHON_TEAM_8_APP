@@ -6,6 +6,7 @@ import android.widget.LinearLayout
 import android.widget.Button
 import android.widget.TextView
 import android.widget.ScrollView
+import android.widget.HorizontalScrollView
 import android.graphics.Color
 import android.view.ViewGroup
 import android.widget.LinearLayout.LayoutParams
@@ -81,7 +82,7 @@ class RewritingManager(private val context: Context) {
             setPadding(16.dp(), 16.dp(), 16.dp(), 0.dp()) // 하단 패딩 제거
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
+             280.dp() // 고정 높이로 통일
             )
             setBackgroundColor(Color.BLACK) // 검은색 배경
         }
@@ -93,7 +94,8 @@ class RewritingManager(private val context: Context) {
             background = roundedBg(Color.parseColor("#FF424242"), 12f) // 다크 그레이
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                140.dp() // 통일된 높이
+                0,
+                1f // 가중치로 공간 분배
             ).apply {
                 setMargins(0, 0, 0, 8.dp()) // 하단 마진 줄임 (16dp → 8dp)
             }
@@ -109,20 +111,15 @@ class RewritingManager(private val context: Context) {
             scrollBarStyle = View.SCROLLBARS_INSIDE_OVERLAY
         }
         
-        // 말풍선 텍스트 (8줄 반복)
+        // 말풍선 텍스트 (맞춤법 수정된 ai 답변 반복)
         val bubbleText = TextView(context).apply {
-            text = "사장님 안녕하세요, ㅇㅇㅇㅇㅇㅇ-ai의 수정된 답변\n" +
-                   "사장님 안녕하세요, ㅇㅇㅇㅇㅇㅇ-ai의 수정된 답변\n" +
-                   "사장님 안녕하세요, ㅇㅇㅇㅇㅇㅇ-ai의 수정된 답변\n" +
-                   "사장님 안녕하세요, ㅇㅇㅇㅇㅇㅇ-ai의 수정된 답변\n" +
-                   "사장님 안녕하세요, ㅇㅇㅇㅇㅇㅇ-ai의 수정된 답변\n" +
-                   "사장님 안녕하세요, ㅇㅇㅇㅇㅇㅇ-ai의 수정된 답변\n" +
-                   "사장님 안녕하세요, ㅇㅇㅇㅇㅇㅇ-ai의 수정된 답변\n" +
-                   "사장님 안녕하세요, ㅇㅇㅇㅇㅇㅇ-ai의 수정된 답변\n" +
-                   "사장님 안녕하세요, ㅇㅇㅇㅇㅇㅇ-ai의 수정된 답변\n" +
-                   "사장님 안녕하세요, ㅇㅇㅇㅇㅇㅇ-ai의 수정된 답변\n" +
-                   "사장님 안녕하세요, ㅇㅇㅇㅇㅇㅇ-ai의 수정된 답변\n" +
-                   "사장님 안녕하세요, ㅇㅇㅇㅇㅇㅇ-ai의 수정된 답변"
+            text = "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
+                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변"
             textSize = 12f
             setTextColor(Color.WHITE) // 흰색 텍스트
             setTypeface(null, android.graphics.Typeface.NORMAL)
@@ -146,16 +143,36 @@ class RewritingManager(private val context: Context) {
         // }
         // optionsLayout.addView(spacer)
         
-        // 버튼들 (4개 가로 배치) - 하단 고정
-        val buttonContainer = LinearLayout(context).apply {
+        // 하단 컨테이너 (스크롤 가능한 버튼들 + 체크마크)
+        val bottomContainer = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 LayoutParams.WRAP_CONTENT
             ).apply {
-                setMargins(0, 0, 0, 0) // 하단 마진 제거
+                setMargins(0, 0, 0, 0)
             }
-            setPadding(0, 0, 0, 20.dp()) // 하단 패딩 추가로 버튼이 잘리지 않도록
+            setPadding(0, 0, 0, 20.dp())
+            gravity = android.view.Gravity.BOTTOM
+        }
+        
+        // 스크롤 가능한 버튼 컨테이너
+        val scrollableButtonContainer = HorizontalScrollView(context).apply {
+            layoutParams = LayoutParams(
+                0,
+                LayoutParams.WRAP_CONTENT,
+                1f
+            )
+            isHorizontalScrollBarEnabled = true
+            scrollBarStyle = View.SCROLLBARS_INSIDE_OVERLAY
+        }
+        
+        val buttonContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LayoutParams(
+                LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT
+            )
         }
         
         // 버튼 옵션들 (사진과 동일)
@@ -175,7 +192,10 @@ class RewritingManager(private val context: Context) {
             buttonContainer.addView(button)
         }
         
-        // 체크마크 아이콘 (오른쪽 끝) - 더 둥글고 예쁘게
+        scrollableButtonContainer.addView(buttonContainer)
+        bottomContainer.addView(scrollableButtonContainer)
+        
+        // 체크마크 아이콘 (오른쪽 하단) - 더 둥글고 예쁘게
         val checkmarkIcon = TextView(context).apply {
             text = "✓"
             textSize = 18f // 폰트 크기 증가
@@ -192,8 +212,8 @@ class RewritingManager(private val context: Context) {
                 setMargins(12.dp(), 0, 0, 0) // 마진 증가
             }
         }
-        buttonContainer.addView(checkmarkIcon)
-        optionsLayout.addView(buttonContainer)
+        bottomContainer.addView(checkmarkIcon)
+        optionsLayout.addView(bottomContainer)
         
         return optionsLayout
     }

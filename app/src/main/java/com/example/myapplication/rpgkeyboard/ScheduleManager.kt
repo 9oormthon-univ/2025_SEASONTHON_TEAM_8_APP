@@ -84,7 +84,7 @@ class ScheduleManager(private val context: Context) {
             setPadding(16.dp(), 16.dp(), 16.dp(), 16.dp()) // 양쪽 검은 패딩
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
+                280.dp() // 고정 높이로 통일
             )
             setBackgroundColor(Color.BLACK) // 검은 배경
         }
@@ -95,7 +95,8 @@ class ScheduleManager(private val context: Context) {
             setPadding(20.dp(), 20.dp(), 20.dp(), 20.dp())
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
+                0,
+                1f // 가중치로 공간 분배
             )
             background = roundedBg(Color.parseColor("#FF333333"), 16f) // 다크 그레이, 둥근 모서리
         }
@@ -123,7 +124,8 @@ class ScheduleManager(private val context: Context) {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                LayoutParams.WRAP_CONTENT
+                0,
+                1f // 가중치로 공간 분배
             ).apply {
                 setMargins(0, 0, 0, 20.dp())
             }

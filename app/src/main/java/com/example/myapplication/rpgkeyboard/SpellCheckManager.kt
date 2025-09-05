@@ -86,7 +86,7 @@ class SpellCheckManager(private val context: Context) {
             setPadding(16.dp(), 16.dp(), 16.dp(), 0.dp())
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
+                280.dp() // 고정 높이로 통일
             )
             setBackgroundColor(Color.BLACK) // 검은색 배경
         }
@@ -98,7 +98,8 @@ class SpellCheckManager(private val context: Context) {
             background = roundedBg(Color.parseColor("#FF424242"), 12f) // 다크 그레이
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                140.dp() // 통일된 높이
+                0,
+                1f // 가중치로 공간 분배
             ).apply {
                 setMargins(0, 0, 0, 8.dp())
             }
@@ -138,18 +139,30 @@ class SpellCheckManager(private val context: Context) {
         speechBubble.addView(scrollView)
         resultLayout.addView(speechBubble)
         
-        // 체크마크 아이콘만 (가운데 정렬)
-        val checkmarkContainer = LinearLayout(context).apply {
+        // 하단 컨테이너 (체크마크만 오른쪽 하단)
+        val bottomContainer = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 LayoutParams.WRAP_CONTENT
             ).apply {
-                setMargins(0, 20.dp(), 0, 20.dp())
+                setMargins(0, 0, 0, 0)
             }
-            gravity = android.view.Gravity.CENTER
+            setPadding(0, 0, 0, 20.dp())
+            gravity = android.view.Gravity.BOTTOM
         }
         
+        // 빈 공간 (왼쪽)
+        val spacer = View(context).apply {
+            layoutParams = LayoutParams(
+                0,
+                LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        }
+        bottomContainer.addView(spacer)
+        
+        // 체크마크 아이콘 (오른쪽 하단)
         val checkmarkIcon = TextView(context).apply {
             text = "✓"
             textSize = 18f
@@ -164,9 +177,8 @@ class SpellCheckManager(private val context: Context) {
             elevation = 4f
             layoutParams = LayoutParams(40.dp(), 40.dp())
         }
-        
-        checkmarkContainer.addView(checkmarkIcon)
-        resultLayout.addView(checkmarkContainer)
+        bottomContainer.addView(checkmarkIcon)
+        resultLayout.addView(bottomContainer)
         
         return resultLayout
     }
