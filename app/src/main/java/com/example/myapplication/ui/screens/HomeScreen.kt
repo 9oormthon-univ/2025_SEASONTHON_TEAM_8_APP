@@ -49,8 +49,7 @@ import androidx.compose.ui.text.withStyle
 
 @Composable
 fun HomeScreen(
-    onNavigateToConversationAnalysis: () -> Unit = {},
-    onNavigateToKeyboardSettings: () -> Unit = {}
+    onNavigateToConversationAnalysis: () -> Unit = {}
 ) {
     val context = LocalContext.current
     
@@ -204,43 +203,6 @@ fun HomeScreen(
                             }
                         }
                         
-                        // 키 설정 버튼
-                        Card(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(start = 8.dp)
-                                .clickable { onNavigateToKeyboardSettings() },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MainColor1
-                            )
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.icon_key_setting),
-                                    contentDescription = "키 설정",
-                                    modifier = Modifier.size(40.dp)
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "키보드 설정 바로가기",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color.Black
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Image(
-                                    painter = painterResource(id = R.drawable.icon_arrow),
-                                    contentDescription = "화살표",
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
                     }
                     
                     // 히스토리 제목과 See all 버튼

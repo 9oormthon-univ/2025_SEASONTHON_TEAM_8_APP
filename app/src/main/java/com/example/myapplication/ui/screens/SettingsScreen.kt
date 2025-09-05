@@ -42,44 +42,6 @@ fun SettingsScreen() {
             modifier = Modifier.padding(bottom = 24.dp)
         )
         
-        // 키보드 설정 카드
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "키보드 설정",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                
-                // 키보드 설정 설명
-                Text(
-                    text = "AI 키보드의 개인화 설정을 관리합니다.",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // 키보드 설정 열기 버튼
-                Button(
-                    onClick = {
-                        // KeyboardSettingsActivity로 이동
-                        val intent = Intent(context, com.example.myapplication.keyboard.KeyboardSettingsActivity::class.java)
-                        context.startActivity(intent)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("키보드 설정 열기")
-                }
-            }
-        }
         
         // 시스템 설정 카드
         Card(
