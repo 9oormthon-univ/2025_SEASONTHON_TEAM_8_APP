@@ -49,7 +49,8 @@ import androidx.compose.ui.text.withStyle
 
 @Composable
 fun HomeScreen(
-    onNavigateToConversationAnalysis: () -> Unit = {}
+    onNavigateToConversationAnalysis: () -> Unit = {},
+    onNavigateToKeyboardSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
     
@@ -189,7 +190,8 @@ fun HomeScreen(
                         Card(
                             modifier = Modifier
                                 .weight(1f)
-                                .padding(start = 8.dp),
+                                .padding(start = 8.dp)
+                                .clickable { onNavigateToKeyboardSettings() },
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = MainColor1
