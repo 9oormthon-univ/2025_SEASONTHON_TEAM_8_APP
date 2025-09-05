@@ -98,8 +98,7 @@ class SpellCheckManager(private val context: Context) {
             background = roundedBg(Color.parseColor("#FF424242"), 12f) // 다크 그레이
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                0,
-                1f // 가중치로 공간 분배
+                180.dp() // 고정 높이로 설정
             ).apply {
                 setMargins(0, 0, 0, 8.dp())
             }
@@ -113,27 +112,30 @@ class SpellCheckManager(private val context: Context) {
             )
             isVerticalScrollBarEnabled = true
             scrollBarStyle = View.SCROLLBARS_INSIDE_OVERLAY
+            setPadding(0, 0, 0, 0) // 패딩 제거
         }
         
-        // 말풍선 텍스트 (맞춤법 수정된 ai 답변 반복)
+        // 말풍선 텍스트 (실제 사용자 입력 텍스트)
         val bubbleText = TextView(context).apply {
-            text = "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변"
-            textSize = 12f
+            text = if (currentText.isNotEmpty()) {
+                "$currentText + 맞춤법수정글"
+            } else {
+                "맞춤법을 검사할 텍스트를 입력해주세요..."
+            }
+            textSize = 16f // 폰트 크기 더 증가
             setTextColor(Color.WHITE) // 흰색 텍스트
-            setTypeface(null, android.graphics.Typeface.NORMAL)
-            lineHeight = 18.dp()
+            setTypeface(null, android.graphics.Typeface.BOLD) // 볼드로 변경
+            lineHeight = 24.dp() // 줄 간격 더 증가
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 LayoutParams.WRAP_CONTENT
             )
+            setPadding(0, 12.dp(), 0, 12.dp()) // 상하 패딩 더 증가
+            gravity = android.view.Gravity.CENTER_VERTICAL // 수직 중앙 정렬
         }
+        
+        // 수정된 텍스트를 저장할 변수
+        var modifiedText = ""
         
         scrollView.addView(bubbleText)
         speechBubble.addView(scrollView)
@@ -175,7 +177,18 @@ class SpellCheckManager(private val context: Context) {
             )
             gravity = android.view.Gravity.CENTER
             elevation = 4f
-            layoutParams = LayoutParams(40.dp(), 40.dp())
+            layoutParams = LayoutParams(40.dp(), 40.dp()).apply {
+                setMargins(0, 0, 0, 0)
+            }
+            setOnClickListener {
+                // 체크 버튼 클릭 시 맞춤법 수정된 텍스트 적용
+                if (currentText.isNotEmpty()) {
+                    modifiedText = "$currentText + 맞춤법수정글"
+                    // 현재 텍스트 삭제 후 수정된 텍스트 삽입
+                    inputConnection?.deleteSurroundingText(currentText.length, 0)
+                    inputConnection?.commitText(modifiedText, 1)
+                }
+            }
         }
         bottomContainer.addView(checkmarkIcon)
         resultLayout.addView(bottomContainer)

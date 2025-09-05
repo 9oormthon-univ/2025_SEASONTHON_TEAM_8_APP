@@ -94,8 +94,7 @@ class RewritingManager(private val context: Context) {
             background = roundedBg(Color.parseColor("#FF424242"), 12f) // 다크 그레이
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                0,
-                1f // 가중치로 공간 분배
+                180.dp() // 고정 높이로 설정
             ).apply {
                 setMargins(0, 0, 0, 8.dp()) // 하단 마진 줄임 (16dp → 8dp)
             }
@@ -111,24 +110,27 @@ class RewritingManager(private val context: Context) {
             scrollBarStyle = View.SCROLLBARS_INSIDE_OVERLAY
         }
         
-        // 말풍선 텍스트 (맞춤법 수정된 ai 답변 반복)
+        // 말풍선 텍스트 (실제 사용자 입력 텍스트)
         val bubbleText = TextView(context).apply {
-            text = "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변\n" +
-                   "맞춤법 수정된 ai 답변 맞춤법 수정된 ai 답변"
-            textSize = 12f
+            text = if (currentText.isNotEmpty()) {
+                "리라이팅된 텍스트: $currentText"
+            } else {
+                "리라이팅할 텍스트를 입력해주세요..."
+            }
+            textSize = 16f // 폰트 크기 더 증가
             setTextColor(Color.WHITE) // 흰색 텍스트
-            setTypeface(null, android.graphics.Typeface.NORMAL)
-            lineHeight = 18.dp()
+            setTypeface(null, android.graphics.Typeface.BOLD) // 볼드로 변경
+            lineHeight = 24.dp() // 줄 간격 더 증가
             layoutParams = LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 LayoutParams.WRAP_CONTENT
             )
+            setPadding(0, 12.dp(), 0, 12.dp()) // 상하 패딩 더 증가
+            gravity = android.view.Gravity.CENTER_VERTICAL // 수직 중앙 정렬
         }
+        
+        // 수정된 텍스트를 저장할 변수
+        var modifiedText = ""
         
         scrollView.addView(bubbleText)
         speechBubble.addView(scrollView)
@@ -185,9 +187,9 @@ class RewritingManager(private val context: Context) {
         
         buttonOptions.forEach { buttonText ->
             val button = createStyleButton(buttonText) { 
-                // 더미 데이터로 수정된 텍스트 적용
-                val rewrittenText = getRewrittenText(currentText, buttonText)
-                inputConnection?.commitText(rewrittenText, 1)
+                // 수정된 텍스트 생성 및 표시
+                modifiedText = getRewrittenText(currentText, buttonText)
+                bubbleText.text = "수정 예상: $modifiedText"
             }
             buttonContainer.addView(button)
         }
@@ -210,6 +212,14 @@ class RewritingManager(private val context: Context) {
             elevation = 4f // 그림자 추가
             layoutParams = LayoutParams(40.dp(), 40.dp()).apply { // 크기 증가
                 setMargins(12.dp(), 0, 0, 0) // 마진 증가
+            }
+            setOnClickListener {
+                // 체크 버튼 클릭 시 수정된 텍스트 적용
+                if (modifiedText.isNotEmpty()) {
+                    // 현재 텍스트 삭제 후 수정된 텍스트 삽입
+                    inputConnection?.deleteSurroundingText(currentText.length, 0)
+                    inputConnection?.commitText(modifiedText, 1)
+                }
             }
         }
         bottomContainer.addView(checkmarkIcon)
