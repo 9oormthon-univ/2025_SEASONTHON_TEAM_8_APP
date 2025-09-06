@@ -126,11 +126,19 @@ fun MainScreen() {
                     when (selectedScreen) {
                         "home" -> HomeScreen(
                             onNavigateToConversationAnalysis = { selectedScreen = "conversation_analysis" },
-                            onNavigateToKeyboardSettings = { selectedScreen = "keyboard_settings" }
+                            onNavigateToKeyboardSettings = { selectedScreen = "keyboard_settings" },
+                            onNavigateToGroupAnalysis = { selectedScreen = "group_analysis" },
+                            onNavigateToPersonalAnalysis = { selectedScreen = "personal_analysis" }
                         )           // 홈 화면
                         "conversation_analysis" -> ConversationAnalysisScreen(
                             onBackClick = { selectedScreen = "home" }
                         )    // 대화 분석 화면
+                        "group_analysis" -> GroupConversationAnalysisScreen(
+                            onNavigateBack = { selectedScreen = "home" }
+                        )    // 단체 톡방 분석 화면
+                        "personal_analysis" -> PersonalConversationAnalysisScreen(
+                            onNavigateBack = { selectedScreen = "home" }
+                        )    // 개인 톡방 분석 화면
                         "keyboard_settings" -> KeyboardSettingsScreen()  // 키보드 설정 화면
                         "settings" -> SettingsScreen()   // 설정 화면
                         "keyboard_test" -> KeyboardTestScreen()  // 키보드 테스트 화면
