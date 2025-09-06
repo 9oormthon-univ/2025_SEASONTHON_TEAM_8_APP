@@ -58,6 +58,7 @@ import androidx.compose.ui.draw.shadow
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+
     onNavigateToConversationAnalysis: () -> Unit = {},
     onNavigateToKeyboardSettings: () -> Unit = {},
     onNavigateToGroupAnalysis: () -> Unit = {}, // 단체 톡방 분석으로 이동
@@ -247,6 +248,7 @@ fun HomeScreen(
                             }
                         }
                         
+
                         // 키 설정 버튼
                         Card(
                             modifier = Modifier

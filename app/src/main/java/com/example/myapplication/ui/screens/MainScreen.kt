@@ -87,6 +87,7 @@ fun MainScreen() {
                     // 선택된 화면에 따라 적절한 컴포넌트 렌더링
                     when (selectedScreen) {
                         "home" -> HomeScreen(
+
                             onNavigateToConversationAnalysis = { selectedScreen = "conversation_analysis" },
                             onNavigateToKeyboardSettings = { selectedScreen = "keyboard_settings" },
                             onNavigateToGroupAnalysis = { selectedScreen = "group_analysis" },
@@ -95,6 +96,7 @@ fun MainScreen() {
                         "conversation_analysis" -> ConversationAnalysisScreen(
                             onBackClick = { selectedScreen = "home" }
                         )    // 대화 분석 화면
+
                         "group_analysis" -> GroupConversationAnalysisScreen(
                             onNavigateBack = { selectedScreen = "home" }
                         )    // 단체 톡방 분석 화면
