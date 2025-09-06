@@ -47,7 +47,15 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import com.example.myapplication.ui.components.HomeScreen.HistoryCard
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.shadow
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToConversationAnalysis: () -> Unit = {},
@@ -57,11 +65,45 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundColor)
-    ) {
+    Scaffold(
+        topBar = {
+            // 상단 앱바
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(
+                        elevation = 8.dp,
+                        spotColor = Color.White.copy(alpha = 0.3f)
+                    ),
+                shape = RoundedCornerShape(bottomStart = 0.dp, bottomEnd = 0.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.Black
+                )
+            ) {
+                TopAppBar(
+                    title = {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo_textmate),
+                            contentDescription = "TextMate 로고",
+                            modifier = Modifier.height(28.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White
+                    )
+                )
+            }
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BackgroundColor)
+                .padding(paddingValues)
+        ) {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -333,6 +375,7 @@ fun HomeScreen(
                     }
                 }
             }
+        }
         }
     }
 }

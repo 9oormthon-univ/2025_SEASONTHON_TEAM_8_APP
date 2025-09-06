@@ -77,45 +77,7 @@ fun MainScreen() {
             }
         ) {
         // 메인 콘텐츠 영역
-        Scaffold(
-            topBar = {
-                // 상단 앱바
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(
-                            elevation = 8.dp,
-                            spotColor = Color.White.copy(alpha = 0.3f)
-                        ),
-                    shape = RoundedCornerShape(bottomStart = 0.dp, bottomEnd = 0.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.Black
-                    )
-                ) {
-                    TopAppBar(
-                        title = { 
-                            Image(
-                                painter = painterResource(id = R.drawable.logo_textmate),
-                                contentDescription = "TextMate 로고",
-                                modifier = Modifier.height(28.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                        },
-                        navigationIcon = {
-                            // 햄버거 메뉴 버튼 (드로어 열기)
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Default.Menu, contentDescription = "메뉴", tint = Color.White)
-                            }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.Transparent,
-                            titleContentColor = Color.White,
-                            navigationIconContentColor = Color.White
-                        )
-                    )
-                }
-            }
-        ) { paddingValues ->
+        Scaffold { paddingValues ->
             // 콘텐츠 영역 (상단 앱바의 패딩 고려)
             Box(
                 modifier = Modifier
