@@ -1,5 +1,8 @@
 package com.example.myapplication.ui.components
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,13 +11,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
+import com.example.myapplication.config.Config
 import com.example.myapplication.viewmodel.AuthState
 import com.example.myapplication.viewmodel.AuthViewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 
 @Composable
 fun GoogleAuthButton(
@@ -22,10 +31,78 @@ fun GoogleAuthButton(
         onAuthSuccess: (String, String) -> Unit = { _, _ -> },
         onAuthError: (String) -> Unit = {}
 ) {
+    val context = LocalContext.current
     val authViewModel = remember { AuthViewModel() }
     val authState by authViewModel.authState.collectAsState()
 
-    // 인증 상태에 따른 UI 업데이트
+    // Google Sign-In 클라이언트 초기화
+    val googleSignInClient: GoogleSignInClient = remember {
+        // Google OAuth 설정 검증
+        if (!Config.GoogleOAuth.isConfigured()) {
+            println("❌ Google OAuth 설정이 완료되지 않았습니다. Config.kt에서 WEB_CLIENT_ID를 설정해주세요.")
+        }
+
+        val gso =
+                GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken(Config.GoogleOAuth.WEB_CLIENT_ID)
+                        .requestEmail()
+                        .requestProfile()
+                        .build()
+        GoogleSignIn.getClient(context, gso)
+    }
+
+    // `ActivityResultLauncher`를 사용하여 Google Sign-In 결과를 처리합니다.
+    val googleAuthLauncher =
+            rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartActivityForResult()
+            ) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                    try {
+                        // Google 계정 정보를 가져와서 ID 토큰을 얻습니다.
+                        val account = task.getResult(ApiException::class.java)
+                        val idToken = account?.idToken
+
+                        if (idToken != null) {
+                            authViewModel.authenticateWithGoogle(idToken)
+                        } else {
+                            onAuthError("ID 토큰을 가져오지 못했습니다.")
+                        }
+                    } catch (e: ApiException) {
+                        // Google Sign-In 실패 시 에러 처리
+                        val errorMessage =
+                                when (e.statusCode) {
+                                    12501 -> { // SIGN_IN_CANCELLED
+                                        println("Google Sign-In이 사용자에 의해 취소되었습니다.")
+                                        "Google Sign-In이 취소되었습니다."
+                                    }
+                                    7 -> { // NETWORK_ERROR
+                                        println("네트워크 오류로 Google Sign-In이 실패했습니다.")
+                                        "네트워크 연결을 확인해주세요."
+                                    }
+                                    8 -> { // INTERNAL_ERROR
+                                        println("Google Sign-In 내부 오류가 발생했습니다.")
+                                        "Google Sign-In 내부 오류가 발생했습니다."
+                                    }
+                                    10 -> { // DEVELOPER_ERROR
+                                        println("Google OAuth 설정 오류입니다.")
+                                        "Google OAuth 설정 오류입니다."
+                                    }
+                                    else -> {
+                                        println("Google Sign-In 실패: ${e.statusCode} - ${e.message}")
+                                        "Google Sign-In 실패: ${e.statusCode}"
+                                    }
+                                }
+                        onAuthError(errorMessage)
+                    }
+                } else {
+                    // 사용자가 인증을 취소했거나 다른 오류가 발생했을 때
+                    println("Google Sign-In 결과 코드: ${result.resultCode}")
+                    println("Google Sign-In이 취소되었거나 실패했습니다.")
+                    onAuthError("Google Sign-In이 취소되었습니다.")
+                }
+            }
+
     LaunchedEffect(authState) {
         when (val currentState = authState) {
             is AuthState.Success -> {
@@ -45,6 +122,7 @@ fun GoogleAuthButton(
         }
     }
 
+    // UI 부분은 동일하게 유지
     when (authState) {
         is AuthState.Loading -> {
             Button(
@@ -75,10 +153,16 @@ fun GoogleAuthButton(
         else -> {
             Button(
                     onClick = {
-                        // 실제 Google OAuth 인증 코드 생성
-                        // 실제 구현에서는 Google OAuth 플로우를 통해 받은 코드를 사용해야 합니다
-                        val googleAuthCode = generateGoogleAuthCode()
-                        authViewModel.authenticateWithGoogle(googleAuthCode)
+                        // Google OAuth 설정 검증
+                        if (!Config.GoogleOAuth.isConfigured()) {
+                            onAuthError("Google OAuth 설정이 완료되지 않았습니다. 개발자에게 문의하세요.")
+                            return@Button
+                        }
+
+                        // 버튼 클릭 시 런처를 사용하여 Google Sign-In 인텐트를 실행합니다.
+                        println("🔐 Google Sign-In 시작...")
+                        val signInIntent = googleSignInClient.signInIntent
+                        googleAuthLauncher.launch(signInIntent)
                     },
                     modifier = modifier.fillMaxWidth(0.8f).height(56.dp),
                     colors =
@@ -97,13 +181,11 @@ fun GoogleAuthButton(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                 ) {
-                    // 구글 로고
                     Image(
                             painter = painterResource(id = R.drawable.logo_google),
                             contentDescription = "Google 로고",
                             modifier = Modifier.size(20.dp).padding(end = 12.dp)
                     )
-
                     Text(
                             text = "Continue with Google",
                             fontSize = 16.sp,
@@ -113,17 +195,4 @@ fun GoogleAuthButton(
             }
         }
     }
-}
-
-/** Google OAuth 인증 코드를 생성하는 함수 실제 구현에서는 Google OAuth 플로우를 통해 받은 코드를 사용해야 합니다 */
-private fun generateGoogleAuthCode(): String {
-    // 실제 Google OAuth 플로우에서는 다음과 같은 형태의 코드를 받습니다:
-    // "4/0AX4XfWh..." 형태의 authorization code
-
-    // 현재는 시뮬레이션을 위한 코드를 생성합니다
-    val timestamp = System.currentTimeMillis()
-    val randomCode = (100000..999999).random()
-
-    // 실제 Google OAuth authorization code 형태로 시뮬레이션
-    return "4/0AX4XfWh${randomCode}_${timestamp}_google_oauth_code"
 }

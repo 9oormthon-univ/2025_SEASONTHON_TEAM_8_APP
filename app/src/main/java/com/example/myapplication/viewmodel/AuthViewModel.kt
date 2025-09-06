@@ -15,12 +15,12 @@ class AuthViewModel : ViewModel() {
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    fun authenticateWithGoogle(code: String) {
+    fun authenticateWithGoogle(idToken: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
 
             authRepository
-                    .authenticateWithGoogle(code)
+                    .authenticateWithGoogle(idToken)
                     .onSuccess { authResponse ->
                         _authState.value = AuthState.Success(authResponse)
                     }
@@ -33,6 +33,10 @@ class AuthViewModel : ViewModel() {
 
     fun resetAuthState() {
         _authState.value = AuthState.Idle
+    }
+
+    fun handleAuthError(message: String) {
+        _authState.value = AuthState.Error(message)
     }
 }
 

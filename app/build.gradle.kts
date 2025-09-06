@@ -57,7 +57,7 @@ dependencies {
 
     // Google Sign-In 의존성
     implementation("com.google.android.gms:play-services-auth:20.7.0")
-    
+
     // RPG 키보드용 의존성
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
