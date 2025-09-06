@@ -21,8 +21,8 @@ object Config {
     val baseUrl: String
         get() =
                 when (currentEnvironment) {
-                    Environment.DEVELOPMENT -> "https://textmate-dev.zapto.org"
-                    Environment.STAGING -> "https://textmate-staging.zapto.org"
+                    Environment.DEVELOPMENT -> "https://textmate.zapto.org"
+                    Environment.STAGING -> "https://textmate.zapto.org"
                     Environment.PRODUCTION -> "https://textmate.zapto.org"
                 }
 
@@ -67,8 +67,9 @@ object Config {
 
     /** Google OAuth 설정 */
     object GoogleOAuth {
-        /** Google Web Client ID - 실제 값으로 교체 필요 */
-        const val WEB_CLIENT_ID = "YOUR_WEB_CLIENT_ID"
+        /** Google Web Client ID - 새로운 OAuth 클라이언트 ID */
+        const val WEB_CLIENT_ID =
+                "779645352775-g7ocv34fisjumqrvhvvnajt8tedda07s.apps.googleusercontent.com"
 
         /** Google OAuth 인증 엔드포인트 */
         val authEndpoint: String

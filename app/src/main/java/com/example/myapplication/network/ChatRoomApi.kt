@@ -88,18 +88,44 @@ class ChatRoomApi {
                         val connection = url.openConnection() as HttpURLConnection
                         connection.requestMethod = "POST"
                         connection.setRequestProperty("Accept", "application/json")
-                        connection.setRequestProperty("Content-Type", "application/json")
                         connection.setRequestProperty("User-Agent", Config.userAgent)
                         connection.doOutput = true
                         connection.connectTimeout = connectionTimeout.toInt()
                         connection.readTimeout = readTimeout.toInt()
 
-                        // 요청 본문 작성
-                        val requestBody = """{"file":"${request.file}"}"""
-                        OutputStreamWriter(connection.outputStream).use { writer ->
-                            writer.write(requestBody)
-                            writer.flush()
-                        }
+                        // multipart/form-data 형식으로 파일 업로드
+                        val boundary = "----WebKitFormBoundary${System.currentTimeMillis()}"
+                        connection.setRequestProperty(
+                                "Content-Type",
+                                "multipart/form-data; boundary=$boundary"
+                        )
+
+                        val outputStream = connection.outputStream
+                        val writer = OutputStreamWriter(outputStream, "UTF-8")
+
+                        // 파일 데이터 추가
+                        writer.append("--$boundary").append("\r\n")
+                        writer.append(
+                                        "Content-Disposition: form-data; name=\"file\"; filename=\"chat.txt\""
+                                )
+                                .append("\r\n")
+                        writer.append("Content-Type: application/octet-stream").append("\r\n")
+                        writer.append("\r\n")
+                        writer.flush()
+
+                        // Base64 디코딩된 파일 데이터를 바이트 배열로 변환하여 전송
+                        val fileBytes =
+                                android.util.Base64.decode(
+                                        request.file,
+                                        android.util.Base64.DEFAULT
+                                )
+                        outputStream.write(fileBytes)
+                        outputStream.flush()
+
+                        writer.append("\r\n")
+                        writer.append("--$boundary--").append("\r\n")
+                        writer.flush()
+                        writer.close()
 
                         if (Config.isLoggingEnabled) {
                             if (Config.isLoggingEnabled) {

@@ -50,14 +50,15 @@ fun MainScreen() {
         // 온보딩 화면만 표시
         OnboardingScreen(
                 onGetStarted = { selectedScreen = "welcome" },
-                onAuthSuccess = { accessToken, refreshToken ->
-                    // Google 인증 성공 시 토큰 저장 및 처리
+                onAuthSuccess = { email, name, profileUrl ->
+                    // Google 인증 성공 시 사용자 정보 처리
                     println("Google 인증 성공!")
-                    println("Access Token: $accessToken")
-                    println("Refresh Token: $refreshToken")
+                    println("이메일: $email")
+                    println("이름: $name")
+                    println("프로필 사진: $profileUrl")
 
-                    // TokenManager를 사용하여 토큰 저장
-                    tokenManager.saveTokens(accessToken, refreshToken)
+                    // 로컬 사용자 정보는 OnboardingScreen에서 이미 저장됨
+                    // 여기서는 추가적인 처리가 필요한 경우에만 구현
 
                     // 웰컴 화면으로 이동
                     selectedScreen = "welcome"

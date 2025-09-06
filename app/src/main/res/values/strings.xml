@@ -11,4 +11,7 @@
     <string name="about">정보</string>
     <string name="version">버전</string>
     <string name="app_version">v1.0.0</string>
+    
+    <!-- Google OAuth 설정 -->
+    <string name="google_sign_in_options">DEFAULT_SIGN_IN</string>
 </resources>
