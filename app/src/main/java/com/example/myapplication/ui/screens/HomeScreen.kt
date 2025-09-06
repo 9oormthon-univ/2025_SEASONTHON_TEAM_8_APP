@@ -160,7 +160,7 @@ fun HomeScreen(
                         AndroidView(
                             factory = { context ->
                                 VideoView(context).apply {
-                                    val videoUri = Uri.parse("android.resource://${context.packageName}/${R.raw.character}")
+                                    val videoUri = Uri.parse("android.resource://${context.packageName}/${R.raw.image01}")
                                     setVideoURI(videoUri)
                                     setOnPreparedListener { mediaPlayer ->
                                         mediaPlayer.isLooping = true
@@ -173,8 +173,8 @@ fun HomeScreen(
                                         android.view.ViewGroup.LayoutParams.MATCH_PARENT
                                     )
                                     // 스케일 강제 적용
-                                    scaleX = 2.0f
-                                    scaleY = 2.0f
+                                    scaleX = 1.0f
+                                    scaleY = 1.0f
                                 }
                             },
                             modifier = Modifier

@@ -42,6 +42,7 @@ import com.example.myapplication.ui.theme.GradientColor2
 import com.example.myapplication.ui.theme.GradientColor3
 import com.example.myapplication.ui.theme.GradientColor4
 import com.example.myapplication.ui.theme.GradientColor5
+import com.example.myapplication.ui.theme.PointColor1
 import com.example.myapplication.ui.theme.getDesignGradientBrush
 
 @Composable
@@ -79,7 +80,7 @@ fun WelcomScreen(
                     modifier = Modifier
                         .padding(vertical = 8.dp)
                         .background(
-                            brush = cardGradient,
+                            color = MainColor1,
                             shape = RoundedCornerShape(20.dp)
                         )
                 ) {
@@ -87,19 +88,17 @@ fun WelcomScreen(
                         text = "안녕하세요",
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
                 }
-                
-                Spacer(modifier = Modifier.height(5.dp))
                 
                 // 두 번째 말풍선 - "저는 당신의 TextMate 예요"
                 Box(
                     modifier = Modifier
                         .padding(vertical = 8.dp)
                         .background(
-                            brush = cardGradient,
+                            color = MainColor1,
                             shape = RoundedCornerShape(20.dp)
                         )
                 ) {
@@ -110,19 +109,19 @@ fun WelcomScreen(
                         Text(
                             text = "저는 당신의 ",
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.Bold,
                             color = Color.Black
                         )
                         Text(
                             text = "TextMate",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black
+                            color = PointColor1
                         )
                         Text(
                             text = " 예요",
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.Bold,
                             color = Color.Black
                         )
                     }
@@ -141,7 +140,7 @@ fun WelcomScreen(
                 AndroidView(
                     factory = { context ->
                         VideoView(context).apply {
-                            val videoUri = Uri.parse("android.resource://${context.packageName}/${R.raw.character}")
+                            val videoUri = Uri.parse("android.resource://${context.packageName}/${R.raw.image01}")
                             setVideoURI(videoUri)
                             setOnPreparedListener { mediaPlayer ->
                                 mediaPlayer.isLooping = true
@@ -154,8 +153,8 @@ fun WelcomScreen(
                                 android.view.ViewGroup.LayoutParams.MATCH_PARENT
                             )
                             // 스케일 강제 적용
-                            scaleX = 2.0f
-                            scaleY = 2.0f
+                            scaleX = 0.8f
+                            scaleY = 0.8f
                         }
                     },
                     modifier = Modifier
