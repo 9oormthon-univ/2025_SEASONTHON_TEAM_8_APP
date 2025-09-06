@@ -12,10 +12,34 @@ import android.view.ViewGroup
 import android.widget.LinearLayout.LayoutParams
 import android.graphics.drawable.GradientDrawable
 import android.view.inputmethod.InputConnection
+import kotlinx.coroutines.*
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+import com.example.myapplication.BuildConfig
+
+/**
+ * API 요청/응답 데이터 클래스
+ */
+data class TextTransformRequest(
+    val text: String,
+    val style: String,
+    val language: String = "korean"
+)
+
+data class TextTransformResponse(
+    val original_text: String,
+    val transformed_text: String,
+    val style: String,
+    val language: String
+)
 
 /**
  * 리라이팅(문체 변환) UI를 생성하고 결과를 입력창에 반영
- * - 더미(샘플) 변환을 적용하며, 실제 AI 연결 시 이 부분만 교체하면 됨
+ * - 실제 AI API와 통신하여 텍스트 변환
  * - 무채색 기반의 통일된 UI 디자인 적용
  * - 키보드 크기에 맞춘 컴팩트한 디자인
  */
@@ -45,7 +69,20 @@ class RewritingManager(private val context: Context) {
         private const val TEXT_SIZE_TITLE = 14f
         private const val TEXT_SIZE_BUTTON = 12f
         private const val TEXT_SIZE_SMALL = 10f
+        
+        // API 설정
+        private const val API_ENDPOINT = "/text/transform"
     }
+    
+    // HTTP 클라이언트
+    private val httpClient = OkHttpClient.Builder()
+        .connectTimeout(BuildConfig.API_TIMEOUT_SECONDS.toLong(), TimeUnit.SECONDS)
+        .readTimeout(BuildConfig.API_TIMEOUT_SECONDS.toLong(), TimeUnit.SECONDS)
+        .writeTimeout(BuildConfig.API_TIMEOUT_SECONDS.toLong(), TimeUnit.SECONDS)
+        .build()
+    
+    // 코루틴 스코프
+    private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     
     /**
      * dp 단위를 픽셀로 변환하는 확장 함수
@@ -71,11 +108,72 @@ class RewritingManager(private val context: Context) {
         }
     
     /**
+     * API를 통해 텍스트 변환 요청
+     */
+    private suspend fun transformTextWithAPI(
+        text: String, 
+        style: String,
+        authToken: String?,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        try {
+            val requestBody = JSONObject().apply {
+                put("text", text)
+                put("style", style)
+                put("language", "korean")
+            }.toString()
+            
+            val requestBuilder = Request.Builder()
+                .url("${BuildConfig.API_BASE_URL}$API_ENDPOINT")
+                .post(requestBody.toRequestBody("application/json".toMediaType()))
+                .addHeader("Content-Type", "application/json")
+            
+            // JWT 토큰이 있으면 Authorization 헤더 추가 (테스트용으로 기본 토큰 사용)
+            val tokenToUse = if (!authToken.isNullOrEmpty()) authToken else BuildConfig.TEST_JWT_TOKEN
+            requestBuilder.addHeader("Authorization", "Bearer $tokenToUse")
+            
+            val request = requestBuilder.build()
+            
+            val response = httpClient.newCall(request).execute()
+            
+            if (response.isSuccessful) {
+                val responseBody = response.body?.string()
+                if (responseBody != null) {
+                    val jsonResponse = JSONObject(responseBody)
+                    val transformedText = jsonResponse.getString("transformed_text")
+                    onSuccess(transformedText)
+                } else {
+                    onError("응답 데이터가 없습니다.")
+                }
+            } else {
+                onError("API 요청 실패: ${response.code} ${response.message}")
+            }
+        } catch (e: Exception) {
+            onError("네트워크 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * 스타일 이름을 API 스타일로 변환
+     */
+    private fun convertStyleToAPI(style: String): String {
+        return when (style) {
+            "더 격식있게" -> "formal"
+            "친절하게" -> "polite"
+            "재미있게" -> "casual"
+            "간결하게" -> "business"
+            else -> "formal"
+        }
+    }
+    
+    /**
      * 리라이팅 옵션 선택 UI를 생성 (사진 스타일)
      */
     fun createRewritingOptions(
         inputConnection: InputConnection?,
-        currentText: String
+        currentText: String,
+        authToken: String? = null
     ): LinearLayout {
         val optionsLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -187,9 +285,31 @@ class RewritingManager(private val context: Context) {
         
         buttonOptions.forEach { buttonText ->
             val button = createStyleButton(buttonText) { 
-                // 수정된 텍스트 생성 및 표시
-                modifiedText = getRewrittenText(currentText, buttonText)
-                bubbleText.text = "수정 예상: $modifiedText"
+                // 로딩 상태 표시
+                bubbleText.text = "변환 중... 잠시만 기다려주세요."
+                
+                // API 호출
+                coroutineScope.launch {
+                    val apiStyle = convertStyleToAPI(buttonText)
+                    transformTextWithAPI(
+                        text = currentText,
+                        style = apiStyle,
+                        authToken = authToken,
+                        onSuccess = { transformedText ->
+                            // UI 스레드에서 실행
+                            coroutineScope.launch(Dispatchers.Main) {
+                                modifiedText = transformedText
+                                bubbleText.text = "변환 완료: $modifiedText"
+                            }
+                        },
+                        onError = { errorMessage ->
+                            // UI 스레드에서 실행
+                            coroutineScope.launch(Dispatchers.Main) {
+                                bubbleText.text = "오류: $errorMessage"
+                            }
+                        }
+                    )
+                }
             }
             buttonContainer.addView(button)
         }
@@ -294,19 +414,10 @@ class RewritingManager(private val context: Context) {
     }
     
     /**
-     * 더미 데이터로 리라이팅된 텍스트 반환
+     * 리소스 정리
      */
-    private fun getRewrittenText(originalText: String, style: String): String {
-        return when (style) {
-            "더 격식있게" -> "[격식체] $originalText"
-            "친절하게" -> "[친절체] $originalText"
-            "재미있게" -> "[유머체] $originalText"
-            "간결하게" -> "[간결체] $originalText"
-            "공손체" -> "[공손체] $originalText"
-            "친근체" -> "[친근체] $originalText"
-            "단답체" -> "[단답체] $originalText"
-            "격식체" -> "[격식체] $originalText"
-            else -> originalText
-        }
+    fun cleanup() {
+        coroutineScope.cancel()
+        httpClient.dispatcher.executorService.shutdown()
     }
 }

@@ -11,10 +11,33 @@ import android.view.ViewGroup
 import android.widget.LinearLayout.LayoutParams
 import android.graphics.drawable.GradientDrawable
 import android.view.inputmethod.InputConnection
+import kotlinx.coroutines.*
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+import com.example.myapplication.BuildConfig
 
 /**
- * 맞춤법 검사 UI 생성 및 더미 검사/수정 처리
- * - 오류 리스트를 카드 형태로 보여주고, 항목별 수정 또는 일괄 확인 제공
+ * API 요청/응답 데이터 클래스
+ */
+data class SpellCheckRequest(
+    val text: String,
+    val language: String = "korean"
+)
+
+data class SpellCheckResponse(
+    val original_text: String,
+    val corrected_text: String,
+    val language: String,
+    val corrections_made: Boolean
+)
+
+/**
+ * 맞춤법 검사 UI 생성 및 실제 API 통신 처리
+ * - 백엔드 API를 통해 맞춤법 검사 및 교정
  * - 무채색 기반의 통일된 UI 디자인 적용
  * - 키보드 크기에 맞춘 컴팩트한 디자인
  */
@@ -49,7 +72,20 @@ class SpellCheckManager(private val context: Context) {
         private const val TEXT_SIZE_BUTTON = 12f
         private const val TEXT_SIZE_ERROR = 12f
         private const val TEXT_SIZE_SMALL = 10f
+        
+        // API 설정
+        private const val API_ENDPOINT = "/text/spell-check"
     }
+    
+    // HTTP 클라이언트
+    private val httpClient = OkHttpClient.Builder()
+        .connectTimeout(BuildConfig.API_TIMEOUT_SECONDS.toLong(), TimeUnit.SECONDS)
+        .readTimeout(BuildConfig.API_TIMEOUT_SECONDS.toLong(), TimeUnit.SECONDS)
+        .writeTimeout(BuildConfig.API_TIMEOUT_SECONDS.toLong(), TimeUnit.SECONDS)
+        .build()
+    
+    // 코루틴 스코프
+    private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     
     /**
      * dp 단위를 픽셀로 변환하는 확장 함수
@@ -75,11 +111,71 @@ class SpellCheckManager(private val context: Context) {
         }
     
     /**
+     * API를 통해 맞춤법 검사 요청
+     */
+    private suspend fun spellCheckWithAPI(
+        text: String,
+        authToken: String?,
+        onSuccess: (String, Boolean) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        try {
+            println("SpellCheckManager: API 호출 시작 - 텍스트: $text")
+            
+            val requestBody = JSONObject().apply {
+                put("text", text)
+                put("language", "korean")
+            }.toString()
+            
+            println("SpellCheckManager: 요청 본문: $requestBody")
+            
+            val requestBuilder = Request.Builder()
+                .url("${BuildConfig.API_BASE_URL}$API_ENDPOINT")
+                .post(requestBody.toRequestBody("application/json".toMediaType()))
+                .addHeader("Content-Type", "application/json")
+            
+            // JWT 토큰이 있으면 Authorization 헤더 추가 (테스트용으로 기본 토큰 사용)
+            val tokenToUse = if (!authToken.isNullOrEmpty()) authToken else BuildConfig.TEST_JWT_TOKEN
+            requestBuilder.addHeader("Authorization", "Bearer $tokenToUse")
+            
+            val request = requestBuilder.build()
+            println("SpellCheckManager: 요청 URL: ${request.url}")
+            
+            val response = httpClient.newCall(request).execute()
+            println("SpellCheckManager: 응답 코드: ${response.code}")
+            
+            if (response.isSuccessful) {
+                val responseBody = response.body?.string()
+                println("SpellCheckManager: 응답 본문: $responseBody")
+                
+                if (responseBody != null) {
+                    val jsonResponse = JSONObject(responseBody)
+                    val correctedText = jsonResponse.getString("corrected_text")
+                    val correctionsMade = jsonResponse.getBoolean("corrections_made")
+                    println("SpellCheckManager: 교정된 텍스트: $correctedText, 교정 여부: $correctionsMade")
+                    onSuccess(correctedText, correctionsMade)
+                } else {
+                    println("SpellCheckManager: 응답 본문이 null")
+                    onError("응답 데이터가 없습니다.")
+                }
+            } else {
+                println("SpellCheckManager: API 요청 실패 - ${response.code} ${response.message}")
+                onError("API 요청 실패: ${response.code} ${response.message}")
+            }
+        } catch (e: Exception) {
+            println("SpellCheckManager: 예외 발생 - ${e.message}")
+            e.printStackTrace()
+            onError("네트워크 오류: ${e.message}")
+        }
+    }
+    
+    /**
      * 맞춤법 검사 결과 UI를 생성 (사진 스타일)
      */
     fun createSpellCheckResult(
         inputConnection: InputConnection?,
-        currentText: String
+        currentText: String,
+        authToken: String? = null
     ): LinearLayout {
         val resultLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -118,7 +214,7 @@ class SpellCheckManager(private val context: Context) {
         // 말풍선 텍스트 (실제 사용자 입력 텍스트)
         val bubbleText = TextView(context).apply {
             text = if (currentText.isNotEmpty()) {
-                "$currentText + 맞춤법수정글"
+                "맞춤법 검사 중... 잠시만 기다려주세요."
             } else {
                 "맞춤법을 검사할 텍스트를 입력해주세요..."
             }
@@ -136,6 +232,41 @@ class SpellCheckManager(private val context: Context) {
         
         // 수정된 텍스트를 저장할 변수
         var modifiedText = ""
+        
+        // 텍스트가 있으면 바로 맞춤법 검사 시작
+        if (currentText.isNotEmpty()) {
+            coroutineScope.launch {
+                try {
+                    spellCheckWithAPI(
+                        text = currentText,
+                        authToken = authToken,
+                        onSuccess = { correctedText, correctionsMade ->
+                            // UI 스레드에서 실행
+                            coroutineScope.launch(Dispatchers.Main) {
+                                modifiedText = correctedText
+                                val statusText = if (correctionsMade) {
+                                    "맞춤법 교정 완료: $correctedText\n\n체크마크를 눌러 적용하세요"
+                                } else {
+                                    "맞춤법 오류 없음: $correctedText"
+                                }
+                                bubbleText.text = statusText
+                            }
+                        },
+                        onError = { errorMessage ->
+                            // UI 스레드에서 실행
+                            coroutineScope.launch(Dispatchers.Main) {
+                                bubbleText.text = "오류: $errorMessage"
+                            }
+                        }
+                    )
+                } catch (e: Exception) {
+                    // 예외 발생 시 UI 스레드에서 실행
+                    coroutineScope.launch(Dispatchers.Main) {
+                        bubbleText.text = "예외 발생: ${e.message}"
+                    }
+                }
+            }
+        }
         
         scrollView.addView(bubbleText)
         speechBubble.addView(scrollView)
@@ -181,12 +312,17 @@ class SpellCheckManager(private val context: Context) {
                 setMargins(0, 0, 0, 0)
             }
             setOnClickListener {
-                // 체크 버튼 클릭 시 맞춤법 수정된 텍스트 적용
-                if (currentText.isNotEmpty()) {
-                    modifiedText = "$currentText + 맞춤법수정글"
-                    // 현재 텍스트 삭제 후 수정된 텍스트 삽입
+                if (modifiedText.isNotEmpty()) {
+                    // 교정된 텍스트가 있으면 현재 커서 위치의 텍스트만 교체
+                    // 1. 현재 커서 위치의 텍스트 길이만큼 삭제
                     inputConnection?.deleteSurroundingText(currentText.length, 0)
+                    // 2. 교정된 텍스트 삽입
                     inputConnection?.commitText(modifiedText, 1)
+                    bubbleText.text = "맞춤법 교정이 적용되었습니다: $modifiedText"
+                    modifiedText = "" // 적용 후 초기화
+                } else {
+                    // 교정된 텍스트가 없으면 대기 메시지
+                    bubbleText.text = "맞춤법 검사 중입니다... 잠시만 기다려주세요."
                 }
             }
         }
@@ -196,112 +332,12 @@ class SpellCheckManager(private val context: Context) {
         return resultLayout
     }
     
-    /**
-     * 맞춤법 오류 항목 생성
-     */
-    private fun createErrorItem(
-        error: SpellError, 
-        inputConnection: InputConnection?
-    ): LinearLayout {
-        val errorLayout = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(ERROR_PADDING_DP.dp(), ERROR_PADDING_DP.dp(), ERROR_PADDING_DP.dp(), ERROR_PADDING_DP.dp())
-            setBackgroundColor(Color.parseColor(COLOR_ERROR_BG))
-            layoutParams = LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                LayoutParams.WRAP_CONTENT
-            ).apply {
-                setMargins(0, ERROR_MARGIN_DP, 0, ERROR_MARGIN_DP)
-            }
-        }
-        
-        // 오류 설명
-        val errorText = TextView(context).apply {
-            text = "❌ ${error.original} → ${error.corrected}"
-            textSize = TEXT_SIZE_ERROR
-            setTextColor(Color.parseColor(COLOR_DARK_GRAY))
-            setPadding(0, 0, 0, 4.dp())
-            setTypeface(null, android.graphics.Typeface.NORMAL)
-        }
-        errorLayout.addView(errorText)
-        
-        // 수정 버튼
-        val fixButton = Button(context).apply {
-            text = "수정"
-            layoutParams = LayoutParams(
-                LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT
-            ).apply {
-                height = (BUTTON_HEIGHT_DP * 0.7f).dp()
-            }
-            setOnClickListener { 
-                inputConnection?.commitText(error.corrected, 1)
-            }
-            setPadding(BUTTON_PADDING_HORIZONTAL_DP.dp(), BUTTON_PADDING_VERTICAL_DP.dp(), 
-                      BUTTON_PADDING_HORIZONTAL_DP.dp(), BUTTON_PADDING_VERTICAL_DP.dp())
-            textSize = TEXT_SIZE_SMALL
-            background = roundedBg(Color.parseColor(COLOR_ACCENT), BUTTON_CORNER_RADIUS_DP)
-            setTextColor(Color.parseColor(COLOR_WHITE))
-            setTypeface(null, android.graphics.Typeface.BOLD)
-        }
-        errorLayout.addView(fixButton)
-        
-        return errorLayout
-    }
     
     /**
-     * 확인 버튼 생성
+     * 리소스 정리
      */
-    private fun createConfirmButton(onClick: () -> Unit): Button {
-        return Button(context).apply {
-            text = "확인"
-            layoutParams = LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                LayoutParams.WRAP_CONTENT
-            ).apply {
-                height = BUTTON_HEIGHT_DP.dp()
-                setMargins(0, 16.dp(), 0, 0)
-            }
-            setOnClickListener { onClick() }
-            setPadding(BUTTON_PADDING_HORIZONTAL_DP.dp(), BUTTON_PADDING_VERTICAL_DP.dp(), 
-                      BUTTON_PADDING_HORIZONTAL_DP.dp(), BUTTON_PADDING_VERTICAL_DP.dp())
-            textSize = TEXT_SIZE_BUTTON
-            background = roundedBg(Color.parseColor(COLOR_ACCENT), BUTTON_CORNER_RADIUS_DP)
-            setTextColor(Color.parseColor(COLOR_WHITE))
-            elevation = BUTTON_ELEVATION_DP.dp().toFloat()
-            setTypeface(null, android.graphics.Typeface.BOLD)
-        }
+    fun cleanup() {
+        coroutineScope.cancel()
+        httpClient.dispatcher.executorService.shutdown()
     }
-    
-    /**
-     * 더미 맞춤법 오류 데이터 반환
-     */
-    private fun getSpellErrors(@Suppress("UNUSED_PARAMETER") text: String): List<SpellError> {
-        // 실제로는 AI로 맞춤법 검사를 수행
-        // text 매개변수는 향후 AI 분석에 사용될 예정
-        return listOf(
-            SpellError("맞춤법", "맞춤법", "맞춤법"),
-            SpellError("검사", "검사", "검사")
-        )
-    }
-    
-    /**
-     * 수정된 텍스트 반환
-     */
-    private fun getCorrectedText(originalText: String, errors: List<SpellError>): String {
-        var correctedText = originalText
-        errors.forEach { error ->
-            correctedText = correctedText.replace(error.original, error.corrected)
-        }
-        return "[수정됨] $correctedText"
-    }
-    
-    /**
-     * 맞춤법 오류 데이터 클래스
-     */
-    data class SpellError(
-        val original: String,
-        val corrected: String,
-        val description: String
-    )
 }

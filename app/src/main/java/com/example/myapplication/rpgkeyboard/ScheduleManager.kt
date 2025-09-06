@@ -12,10 +12,20 @@ import android.widget.LinearLayout
 import android.widget.LinearLayout.LayoutParams
 import android.widget.TextView
 import java.util.Calendar
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import com.example.myapplication.BuildConfig
+import java.util.concurrent.TimeUnit
 
 /**
- * 일정 추가 UI 생성 및 더미 추출/등록 처리
- * - 자연어 텍스트에서 장소/날짜/시간/메모를 추출(샘플)
+ * 일정 추가 UI 생성 및 백엔드 API 연동
+ * - 자연어 텍스트에서 장소/날짜/시간/메모를 추출
  * - 사용자가 필드를 수정 후 "일정 등록" 시 결과를 입력창에 커밋
  * - 무채색 기반의 통일된 UI 디자인 적용
  * - 키보드 크기에 맞춘 컴팩트한 디자인
@@ -50,7 +60,21 @@ class ScheduleManager(private val context: Context) {
         private const val TEXT_SIZE_BUTTON = 12f
         private const val TEXT_SIZE_FIELD = 12f
         private const val TEXT_SIZE_SMALL = 10f
+
+        // API 설정
+        private const val API_ENDPOINT_EXTRACT = "/calendar/extract-events"
+        private const val API_ENDPOINT_CREATE = "/calendar/create-events"
     }
+
+    // HTTP 클라이언트
+    private val httpClient = OkHttpClient.Builder()
+        .connectTimeout(BuildConfig.API_TIMEOUT_SECONDS.toLong(), TimeUnit.SECONDS)
+        .readTimeout(BuildConfig.API_TIMEOUT_SECONDS.toLong(), TimeUnit.SECONDS)
+        .writeTimeout(BuildConfig.API_TIMEOUT_SECONDS.toLong(), TimeUnit.SECONDS)
+        .build()
+
+    // 코루틴 스코프
+    private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
     /** dp 단위를 픽셀로 변환하는 확장 함수 */
     private fun Float.dp(): Int = (this * context.resources.displayMetrics.density).toInt()
@@ -64,7 +88,7 @@ class ScheduleManager(private val context: Context) {
             }
 
     /** 일정 추가 UI를 생성 (사진 스타일) */
-    fun createScheduleAddUI(inputConnection: InputConnection?, currentText: String): LinearLayout {
+    fun createScheduleAddUI(inputConnection: InputConnection?, currentText: String, authToken: String? = null): LinearLayout {
         // 전체 컨테이너 (검은 배경 + 양쪽 패딩)
         val outerContainer =
                 LinearLayout(context).apply {
@@ -109,8 +133,22 @@ class ScheduleManager(private val context: Context) {
                 }
         scheduleLayout.addView(titleText)
 
-        // 추출된 일정 정보 표시
-        val extractedSchedule = extractScheduleInfo(currentText)
+        // 상태 표시 텍스트
+        val statusText = TextView(context).apply {
+            text = "일정 정보를 추출하는 중..."
+            textSize = 12f
+            setTextColor(Color.parseColor("#FF87CEEB"))
+            setPadding(0, 0, 0, 16.dp())
+            gravity = android.view.Gravity.CENTER
+            layoutParams = LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
+            )
+        }
+        scheduleLayout.addView(statusText)
+
+        // 추출된 일정 정보 표시 (초기에는 빈 값)
+        var extractedSchedule = ScheduleInfo("", "", "", "", "")
 
         // 메인 컨테이너 (좌우 분할)
         val mainContainer =
@@ -125,69 +163,174 @@ class ScheduleManager(private val context: Context) {
                                     .apply { setMargins(0, 0, 0, 20.dp()) }
                 }
 
-        // 왼쪽: 입력 필드들
-        val leftContainer =
+        // 3줄 레이아웃: 제목, 장소, 날짜/시간
+        val fieldsContainer =
                 LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    layoutParams =
-                            LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply {
-                                setMargins(0, 0, 10.dp(), 0)
-                            }
+                    layoutParams = LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        LayoutParams.WRAP_CONTENT
+                    )
                 }
 
-        // 장소 입력
-        val locationLayout = createScheduleInputField("장소", extractedSchedule.location)
-        leftContainer.addView(locationLayout)
+        // 1줄: 제목
+        val titleField = createScheduleInputField("제목", "")
+        fieldsContainer.addView(titleField)
 
-        // 날짜 입력 (DatePicker)
-        val dateLayout = createScheduleInputField("날짜", "9월 5일")
-        leftContainer.addView(dateLayout)
+        // 2줄: 장소
+        val locationLayout = createScheduleInputField("장소", "")
+        fieldsContainer.addView(locationLayout)
 
-        // 시간 입력 (TimePicker)
-        val timeLayout = createScheduleInputField("시간", "오후 11시")
-        leftContainer.addView(timeLayout)
-
-        // 오른쪽: 메모 입력
-        val memoContainer =
+        // 3줄: 날짜와 시간 (좌우 분할)
+        val dateTimeContainer =
                 LinearLayout(context).apply {
-                    orientation = LinearLayout.VERTICAL
-                    layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+                    orientation = LinearLayout.HORIZONTAL
+                    layoutParams = LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        LayoutParams.WRAP_CONTENT
+                    )
                 }
 
-        val memoField =
-                EditText(context).apply {
-                    hint = "추가메모 입력 창"
-                    textSize = 12f
-                    setTextColor(Color.WHITE)
-                    setHintTextColor(Color.parseColor("#FF888888"))
-                    layoutParams =
-                            LayoutParams(
-                                    ViewGroup.LayoutParams.MATCH_PARENT,
-                                    140.dp() // 통일된 높이
-                            )
-                    setPadding(12.dp(), 12.dp(), 12.dp(), 12.dp())
-                    background = roundedBg(Color.parseColor("#FF2A2A2A"), 8f)
-                    setTypeface(null, android.graphics.Typeface.NORMAL)
-                    gravity = android.view.Gravity.TOP or android.view.Gravity.START
-                }
-        memoContainer.addView(memoField)
+        // 왼쪽: 날짜
+        val dateLayout = createScheduleInputField("날짜", "")
+        dateLayout.layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply {
+            setMargins(0, 6.dp(), 5.dp(), 6.dp())
+        }
+        dateTimeContainer.addView(dateLayout)
 
-        mainContainer.addView(leftContainer)
-        mainContainer.addView(memoContainer)
+        // 오른쪽: 시간
+        val timeLayout = createScheduleInputField("시간", "")
+        timeLayout.layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply {
+            setMargins(5.dp(), 6.dp(), 0, 6.dp())
+        }
+        dateTimeContainer.addView(timeLayout)
+
+        fieldsContainer.addView(dateTimeContainer)
+        mainContainer.addView(fieldsContainer)
         scheduleLayout.addView(mainContainer)
 
         // 일정 등록 버튼
         val addButton = createScheduleAddButton {
-            // 더미 데이터로 일정 등록 완료 메시지
-            val successMessage = "✅ 일정 등록됨: ${extractedSchedule.location} ${extractedSchedule.date}"
-            inputConnection?.commitText(successMessage, 1)
+            // 일정 등록 완료 알림
+            statusText.text = "일정이 등록되었습니다!"
+            statusText.setTextColor(Color.parseColor("#FF4CAF50")) // 초록색으로 변경
         }
         scheduleLayout.addView(addButton)
 
         // outerContainer에 scheduleLayout 추가
         outerContainer.addView(scheduleLayout)
 
+        // 텍스트가 있으면 일정 정보 추출 시작
+        if (currentText.isNotEmpty()) {
+            coroutineScope.launch {
+                try {
+                    val result = extractScheduleFromAPI(currentText, authToken)
+                    withContext(Dispatchers.Main) {
+                        if (result != null) {
+                            extractedSchedule = result
+                            // UI 업데이트
+                            updateScheduleFields(locationLayout, dateLayout, timeLayout, titleField, result)
+                            statusText.text = "일정 정보 추출 완료"
+                        } else {
+                            statusText.text = "일정 정보 추출 실패"
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        statusText.text = "오류: ${e.message}"
+                    }
+                }
+            }
+        }
+
         return outerContainer
+    }
+
+    /** 백엔드 API에서 일정 정보 추출 */
+    private suspend fun extractScheduleFromAPI(text: String, authToken: String?): ScheduleInfo? {
+        try {
+            val requestBody = JSONObject().apply {
+                put("text", text)
+                put("language", "korean")
+            }.toString()
+
+            val requestBuilder = Request.Builder()
+                .url("${BuildConfig.API_BASE_URL}$API_ENDPOINT_EXTRACT")
+                .post(requestBody.toRequestBody("application/json".toMediaType()))
+                .addHeader("Content-Type", "application/json")
+
+            val tokenToUse = if (!authToken.isNullOrEmpty()) authToken else BuildConfig.TEST_JWT_TOKEN
+            requestBuilder.addHeader("Authorization", "Bearer $tokenToUse")
+
+            val request = requestBuilder.build()
+            val response = httpClient.newCall(request).execute()
+
+            if (response.isSuccessful) {
+                val responseBody = response.body?.string()
+                if (responseBody != null) {
+                    val jsonResponse = JSONObject(responseBody)
+                    val extractedEvents = jsonResponse.getJSONArray("extracted_events")
+                    
+                    if (extractedEvents.length() > 0) {
+                        val firstEvent = extractedEvents.getJSONObject(0)
+                        
+                        // null 값 처리 개선
+                        val location = firstEvent.optString("location", "").let { 
+                            if (it == "null" || it.isEmpty()) "" else it 
+                        }
+                        val description = firstEvent.optString("description", "").let { 
+                            if (it == "null" || it.isEmpty()) "" else it 
+                        }
+                        
+                        // 날짜/시간 형식 변환
+                        val startDateTime = firstEvent.optString("start_datetime", "")
+                        val date = formatDate(startDateTime)
+                        val time = formatTime(startDateTime)
+                        
+                        // 제목과 설명 추출
+                        val title = firstEvent.optString("title", "").let { 
+                            if (it == "null" || it.isEmpty()) "" else it 
+                        }
+                        
+                        return ScheduleInfo(
+                            location = location,
+                            date = date,
+                            time = time,
+                            memo = description,
+                            title = title
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            println("ScheduleManager: API 호출 오류 - ${e.message}")
+        }
+        return null
+    }
+
+    /** 일정 필드 업데이트 */
+    private fun updateScheduleFields(
+        locationLayout: LinearLayout,
+        dateLayout: LinearLayout,
+        timeLayout: LinearLayout,
+        titleLayout: LinearLayout,
+        schedule: ScheduleInfo
+    ) {
+        // 제목 필드 업데이트
+        val titleValue = titleLayout.getChildAt(1) as TextView
+        titleValue.text = schedule.title
+
+        // 장소 필드 업데이트
+        val locationValue = locationLayout.getChildAt(1) as TextView
+        locationValue.text = schedule.location
+
+        // 날짜 필드 업데이트
+        val dateValue = dateLayout.getChildAt(1) as TextView
+        dateValue.text = schedule.date
+
+        // 시간 필드 업데이트
+        val timeValue = timeLayout.getChildAt(1) as TextView
+        timeValue.text = schedule.time
     }
 
     /** 일정 입력 필드 생성 (사진 스타일) */
@@ -373,11 +516,37 @@ class ScheduleManager(private val context: Context) {
         }
     }
 
-    /** 텍스트에서 일정 정보 추출 (더미 데이터) */
-    private fun extractScheduleInfo(@Suppress("UNUSED_PARAMETER") text: String): ScheduleInfo {
-        // 실제로는 AI로 텍스트 분석하여 일정 정보 추출
-        // text 매개변수는 향후 AI 분석에 사용될 예정
-        return ScheduleInfo(location = "카페", date = "내일", time = "15:00", memo = "친구와 만남")
+    /** 날짜 형식 변환 (YYYY-MM-DD HH:MM -> YYYY-MM-DD) */
+    private fun formatDate(dateTime: String): String {
+        return try {
+            if (dateTime.contains(" ")) {
+                dateTime.split(" ")[0] // "2025-12-25 18:00" -> "2025-12-25"
+            } else {
+                dateTime
+            }
+        } catch (e: Exception) {
+            dateTime
+        }
+    }
+
+    /** 시간 형식 변환 (YYYY-MM-DD HH:MM -> HH:MM) */
+    private fun formatTime(dateTime: String): String {
+        return try {
+            if (dateTime.contains(" ")) {
+                dateTime.split(" ")[1] // "2025-12-25 18:00" -> "18:00"
+            } else {
+                dateTime
+            }
+        } catch (e: Exception) {
+            dateTime
+        }
+    }
+
+    /** 리소스 정리 */
+    fun cleanup() {
+        coroutineScope.launch {
+            httpClient.dispatcher.executorService.shutdown()
+        }
     }
 
     /** 일정 정보 데이터 클래스 */
@@ -385,6 +554,7 @@ class ScheduleManager(private val context: Context) {
             val location: String,
             val date: String,
             val time: String,
-            val memo: String
+            val memo: String,
+            val title: String = ""
     )
 }
