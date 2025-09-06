@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -22,6 +23,10 @@ import com.example.myapplication.ui.theme.MainColor1
 import com.example.myapplication.ui.theme.MainColor2
 import com.example.myapplication.ui.theme.PointColor1
 import com.example.myapplication.ui.theme.PointColor2
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
 
 /**
  * 개인 톡방 분석 화면
@@ -29,45 +34,82 @@ import com.example.myapplication.ui.theme.PointColor2
  * 1:1 대화의 분석 결과를 보여주는 화면입니다.
  * 캐릭터 분석, 관계 분석, 말투 분석, 우정 분석 등을 포함합니다.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonalConversationAnalysisScreen(
     onNavigateBack: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundColor)
-            .verticalScroll(scrollState)
-    ) {
-        // 상단 헤더
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = onNavigateBack,
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "뒤로 가기",
-                    tint = Color.White
+    Scaffold(
+        topBar = {
+            // 상단 앱바
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(
+                        elevation = 8.dp,
+                        spotColor = Color.White.copy(alpha = 0.3f)
+                    ),
+                shape = RoundedCornerShape(bottomStart = 0.dp, bottomEnd = 0.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.Black
                 )
+            ) {
+                Column {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = "개인 톡방 분석",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(
+                                    Icons.Default.ArrowBack,
+                                    contentDescription = "뒤로가기",
+                                    tint = Color.White
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = Color.White,
+                            navigationIconContentColor = Color.White
+                        )
+                    )
+                    // 하얀색 그림자
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(5.dp)
+                            .background(
+                                brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                    colors = listOf(
+                                        MainColor2.copy(alpha = 0.3f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+                }
             }
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Text(
-                text = "개인 톡방 분석",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
         }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BackgroundColor)
+                .padding(paddingValues)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+            ) {
         
         // 설명 텍스트
         Text(
@@ -108,6 +150,8 @@ fun PersonalConversationAnalysisScreen(
         RelationshipGrowthGuideSection()
         
         Spacer(modifier = Modifier.height(32.dp))
+            }
+        }
     }
 }
 

@@ -15,10 +15,7 @@ class HangulComposer {
     private var jungseong: Int = -1
     private var jongseong: Int = -1
 
-    data class Result(
-        val commitText: String? = null,
-        val composingText: String? = null
-    )
+    data class Result(val commitText: String? = null, val composingText: String? = null)
 
     fun reset() {
         choseong = -1
@@ -26,9 +23,7 @@ class HangulComposer {
         jongseong = -1
     }
 
-    /**
-     * 조합 중인 글자가 있으면 커밋하고 내부 상태 초기화
-     */
+    /** 조합 중인 글자가 있으면 커밋하고 내부 상태 초기화 */
     fun commitPending(ic: InputConnection?) {
         val composing = getComposingText()
         if (composing.isNotEmpty()) {
@@ -38,10 +33,7 @@ class HangulComposer {
         }
     }
 
-    /**
-     * 백스페이스 처리. 조합 단계에서 가능한 경우 내부 상태만 한 단계 해제하고 true
-     * 해제할 조합이 없으면 false를 반환하여 외부에서 일반 삭제를 수행
-     */
+    /** 백스페이스 처리. 조합 단계에서 가능한 경우 내부 상태만 한 단계 해제하고 true 해제할 조합이 없으면 false를 반환하여 외부에서 일반 삭제를 수행 */
     fun backspace(ic: InputConnection?): Boolean {
         return when {
             jongseong != -1 -> {
@@ -63,10 +55,7 @@ class HangulComposer {
         }
     }
 
-    /**
-     * 자모 입력 처리. 한글 자모면 내부 조합 상태를 갱신하고 composingText를 설정
-     * 비한글은 현재 조합을 커밋한 뒤 그대로 commit
-     */
+    /** 자모 입력 처리. 한글 자모면 내부 조합 상태를 갱신하고 composingText를 설정 비한글은 현재 조합을 커밋한 뒤 그대로 commit */
     fun input(jamo: String, ic: InputConnection?): Result {
         val ch = jamo.firstOrNull() ?: return Result()
         if (!isHangulJamo(ch)) {
@@ -202,14 +191,82 @@ class HangulComposer {
 
     companion object {
         // 초성 19, 중성 21, 종성 28(첫 값은 없음)
-        private val CHOSEONG = charArrayOf(
-            'ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'
-        )
-        private val JUNGSEONG = charArrayOf(
-            'ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'
-        )
-        private val JONGSEONG = charArrayOf(
-            '\u0000','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'
-        )
+        private val CHOSEONG =
+                charArrayOf(
+                        'ㄱ',
+                        'ㄲ',
+                        'ㄴ',
+                        'ㄷ',
+                        'ㄸ',
+                        'ㄹ',
+                        'ㅁ',
+                        'ㅂ',
+                        'ㅃ',
+                        'ㅅ',
+                        'ㅆ',
+                        'ㅇ',
+                        'ㅈ',
+                        'ㅉ',
+                        'ㅊ',
+                        'ㅋ',
+                        'ㅌ',
+                        'ㅍ',
+                        'ㅎ'
+                )
+        private val JUNGSEONG =
+                charArrayOf(
+                        'ㅏ',
+                        'ㅐ',
+                        'ㅑ',
+                        'ㅒ',
+                        'ㅓ',
+                        'ㅔ',
+                        'ㅕ',
+                        'ㅖ',
+                        'ㅗ',
+                        'ㅘ',
+                        'ㅙ',
+                        'ㅚ',
+                        'ㅛ',
+                        'ㅜ',
+                        'ㅝ',
+                        'ㅞ',
+                        'ㅟ',
+                        'ㅠ',
+                        'ㅡ',
+                        'ㅢ',
+                        'ㅣ'
+                )
+        private val JONGSEONG =
+                charArrayOf(
+                        '\u0000',
+                        'ㄱ',
+                        'ㄲ',
+                        'ㄳ',
+                        'ㄴ',
+                        'ㄵ',
+                        'ㄶ',
+                        'ㄷ',
+                        'ㄹ',
+                        'ㄺ',
+                        'ㄻ',
+                        'ㄼ',
+                        'ㄽ',
+                        'ㄾ',
+                        'ㄿ',
+                        'ㅀ',
+                        'ㅁ',
+                        'ㅂ',
+                        'ㅄ',
+                        'ㅅ',
+                        'ㅆ',
+                        'ㅇ',
+                        'ㅈ',
+                        'ㅊ',
+                        'ㅋ',
+                        'ㅌ',
+                        'ㅍ',
+                        'ㅎ'
+                )
     }
 }
