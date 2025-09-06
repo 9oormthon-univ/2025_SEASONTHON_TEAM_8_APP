@@ -77,45 +77,7 @@ fun MainScreen() {
             }
         ) {
         // 메인 콘텐츠 영역
-        Scaffold(
-            topBar = {
-                // 상단 앱바
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(
-                            elevation = 8.dp,
-                            spotColor = Color.White.copy(alpha = 0.3f)
-                        ),
-                    shape = RoundedCornerShape(bottomStart = 0.dp, bottomEnd = 0.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.Black
-                    )
-                ) {
-                    TopAppBar(
-                        title = { 
-                            Image(
-                                painter = painterResource(id = R.drawable.logo_textmate),
-                                contentDescription = "TextMate 로고",
-                                modifier = Modifier.height(28.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                        },
-                        navigationIcon = {
-                            // 햄버거 메뉴 버튼 (드로어 열기)
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Default.Menu, contentDescription = "메뉴", tint = Color.White)
-                            }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.Transparent,
-                            titleContentColor = Color.White,
-                            navigationIconContentColor = Color.White
-                        )
-                    )
-                }
-            }
-        ) { paddingValues ->
+        Scaffold { paddingValues ->
             // 콘텐츠 영역 (상단 앱바의 패딩 고려)
             Box(
                 modifier = Modifier
@@ -125,11 +87,23 @@ fun MainScreen() {
                     // 선택된 화면에 따라 적절한 컴포넌트 렌더링
                     when (selectedScreen) {
                         "home" -> HomeScreen(
-                            onNavigateToConversationAnalysis = { selectedScreen = "conversation_analysis" }
+
+                            onNavigateToConversationAnalysis = { selectedScreen = "conversation_analysis" },
+                            onNavigateToKeyboardSettings = { selectedScreen = "keyboard_settings" },
+                            onNavigateToGroupAnalysis = { selectedScreen = "group_analysis" },
+                            onNavigateToPersonalAnalysis = { selectedScreen = "personal_analysis" }
                         )           // 홈 화면
                         "conversation_analysis" -> ConversationAnalysisScreen(
                             onBackClick = { selectedScreen = "home" }
                         )    // 대화 분석 화면
+
+                        "group_analysis" -> GroupConversationAnalysisScreen(
+                            onNavigateBack = { selectedScreen = "home" }
+                        )    // 단체 톡방 분석 화면
+                        "personal_analysis" -> PersonalConversationAnalysisScreen(
+                            onNavigateBack = { selectedScreen = "home" }
+                        )    // 개인 톡방 분석 화면
+                        "keyboard_settings" -> KeyboardSettingsScreen()  // 키보드 설정 화면
                         "settings" -> SettingsScreen()   // 설정 화면
                         "keyboard_test" -> KeyboardTestScreen()  // 키보드 테스트 화면
                         "help" -> HelpScreen()           // 도움말 화면
