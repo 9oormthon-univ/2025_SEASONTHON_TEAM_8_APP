@@ -80,21 +80,37 @@ fun HomeScreen(
                     containerColor = Color.Black
                 )
             ) {
-                TopAppBar(
-                    title = {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_textmate),
-                            contentDescription = "TextMate 로고",
-                            modifier = Modifier.height(28.dp),
-                            contentScale = ContentScale.Fit
+                Column {
+                    TopAppBar(
+                        title = {
+                            Image(
+                                painter = painterResource(id = R.drawable.logo_textmate),
+                                contentDescription = "TextMate 로고",
+                                modifier = Modifier.height(28.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = Color.White,
+                            navigationIconContentColor = Color.White
                         )
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White
                     )
-                )
+                    // 하얀색 그림자
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(5.dp)
+                            .background(
+                                brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                    colors = listOf(
+                                        MainColor2.copy(alpha = 0.3f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+                }
             }
         }
     ) { paddingValues ->

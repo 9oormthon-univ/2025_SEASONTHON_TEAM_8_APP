@@ -101,7 +101,9 @@ fun MainScreen() {
                         "personal_analysis" -> PersonalConversationAnalysisScreen(
                             onNavigateBack = { selectedScreen = "home" }
                         )    // 개인 톡방 분석 화면
-                        "keyboard_settings" -> KeyboardSettingsScreen()  // 키보드 설정 화면
+                        "keyboard_settings" -> KeyboardSettingsScreen(
+                            onBackClick = { selectedScreen = "home" }
+                        )  // 키보드 설정 화면
                         "settings" -> SettingsScreen()   // 설정 화면
                         "keyboard_test" -> KeyboardTestScreen()  // 키보드 테스트 화면
                         "help" -> HelpScreen()           // 도움말 화면

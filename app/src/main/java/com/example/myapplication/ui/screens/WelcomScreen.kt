@@ -92,7 +92,7 @@ fun WelcomScreen(
                     )
                 }
                 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(5.dp))
                 
                 // 두 번째 말풍선 - "저는 당신의 TextMate 예요"
                 Box(

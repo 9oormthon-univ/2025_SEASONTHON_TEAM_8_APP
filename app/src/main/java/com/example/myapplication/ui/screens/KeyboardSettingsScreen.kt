@@ -17,31 +17,111 @@ package com.example.myapplication.ui.screens
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import com.example.myapplication.ui.theme.BackgroundColor
+import com.example.myapplication.ui.theme.MainColor2
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun KeyboardSettingsScreen() {
+fun KeyboardSettingsScreen(
+    onBackClick: () -> Unit = {}
+) {
     // 현재 컨텍스트 가져오기 (Intent 실행을 위해)
     val context = LocalContext.current
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Scaffold(
+        topBar = {
+            // 상단 앱바
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(
+                        elevation = 8.dp,
+                        spotColor = Color.White.copy(alpha = 0.3f)
+                    ),
+                shape = RoundedCornerShape(bottomStart = 0.dp, bottomEnd = 0.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.Black
+                )
+            ) {
+                Column {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = "키보드 설정",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onBackClick) {
+                                Icon(
+                                    Icons.Default.ArrowBack,
+                                    contentDescription = "뒤로가기",
+                                    tint = Color.White
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = Color.White,
+                            navigationIconContentColor = Color.White
+                        )
+                    )
+                    // 하얀색 그림자
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(5.dp)
+                            .background(
+                                brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                    colors = listOf(
+                                        MainColor2.copy(alpha = 0.3f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+                }
+            }
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BackgroundColor)
+                .padding(paddingValues)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
         // 화면 제목
         Text(
             text = "코멘토",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
+            color = Color.White,
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
@@ -68,7 +148,7 @@ fun KeyboardSettingsScreen() {
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = Color.Black.copy(alpha = 0.8f)
             )
         ) {
             Column(
@@ -78,6 +158,7 @@ fun KeyboardSettingsScreen() {
                     text = "설정 방법",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
+                    color = Color.White,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 
@@ -88,7 +169,8 @@ fun KeyboardSettingsScreen() {
                            "3. '사용'을 탭하세요\n" +
                            "4. 텍스트 입력 시 키보드 선택에서 'AI 자동완성 키보드'를 선택하세요",
                     fontSize = 14.sp,
-                    lineHeight = 20.sp
+                    lineHeight = 20.sp,
+                    color = Color.White.copy(alpha = 0.8f)
                 )
             }
         }
@@ -97,7 +179,10 @@ fun KeyboardSettingsScreen() {
 
         // AI 설정 카드
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Black.copy(alpha = 0.8f)
+            )
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
@@ -106,6 +191,7 @@ fun KeyboardSettingsScreen() {
                     text = "AI 설정",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
+                    color = Color.White,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
@@ -114,6 +200,7 @@ fun KeyboardSettingsScreen() {
                     text = "페르소나",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
+                    color = Color.White,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 
@@ -153,6 +240,7 @@ fun KeyboardSettingsScreen() {
                     text = "자동완성",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
+                    color = Color.White,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 
@@ -165,9 +253,14 @@ fun KeyboardSettingsScreen() {
                         onCheckedChange = { /* 자동완성 토글 로직 (현재 미구현) */ }
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("AI 예측 활성화")
+                    Text(
+                        text = "AI 예측 활성화",
+                        color = Color.White
+                    )
                 }
             }
+        }
+        }
         }
     }
 }

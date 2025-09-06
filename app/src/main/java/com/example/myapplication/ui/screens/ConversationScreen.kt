@@ -54,7 +54,16 @@ import com.example.myapplication.ui.theme.BackgroundColor
 import kotlin.math.abs
 import com.example.myapplication.ui.components.ConversationScreen.ConversationStartDialog
 import com.example.myapplication.ui.components.ConversationScreen.ConversationAnalysisCard
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.shadow
+import com.example.myapplication.ui.theme.MainColor2
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversationAnalysisScreen(
     onBackClick: () -> Unit = {}
@@ -104,40 +113,76 @@ fun ConversationAnalysisScreen(
         }
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundColor)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-        ) {
-            Row(
+    Scaffold(
+        topBar = {
+            // 상단 앱바
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .shadow(
+                        elevation = 8.dp,
+                        spotColor = Color.White.copy(alpha = 0.3f)
+                    ),
+                shape = RoundedCornerShape(bottomStart = 0.dp, bottomEnd = 0.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.Black
+                )
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.icon_back_arrow),
-                    contentDescription = "뒤로가기",
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable { onBackClick() }
-                        .padding(4.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = "대화 분석",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                Column {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = "대화 분석",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onBackClick) {
+                                Icon(
+                                    Icons.Default.ArrowBack,
+                                    contentDescription = "뒤로가기",
+                                    tint = Color.White
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = Color.White,
+                            navigationIconContentColor = Color.White
+                        )
+                    )
+                    // 하얀색 그림자
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(5.dp)
+                            .background(
+                                brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                    colors = listOf(
+                                        MainColor2.copy(alpha = 0.3f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+                }
             }
-
-            Spacer(modifier = Modifier.height(40.dp))
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BackgroundColor)
+                .padding(paddingValues)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+            ) {
+                Spacer(modifier = Modifier.height(40.dp))
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -272,6 +317,7 @@ fun ConversationAnalysisScreen(
                     }
                 }
             )
+        }
         }
     }
 }
