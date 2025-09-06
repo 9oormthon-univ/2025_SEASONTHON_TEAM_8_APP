@@ -1,0 +1,16 @@
+# Android 환경변수 설정 예시 파일
+# 이 파일을 local.properties로 복사하고 실제 값으로 수정하세요
+
+# API 서버 설정
+API_BASE_URL=http://10.0.2.2:8000
+
+# JWT 토큰 (개발용)
+TEST_JWT_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbmRyb2lkdXNlciIsImV4cCI6MTc1OTc3Mjg5M30.LOsQgCusn8AQS3Tp99qzgocA9Q5kDmo4yZJfMGkOhlQ
+
+# API 타임아웃 (초)
+API_TIMEOUT_SECONDS=10
+
+# 사용법:
+# 1. 이 파일을 local.properties로 복사
+# 2. 실제 값으로 수정
+# 3. local.properties는 .gitignore에 추가되어 버전 관리에서 제외됨
